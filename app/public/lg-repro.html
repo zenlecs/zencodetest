@@ -1,0 +1,39 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Liquid Glass Repro</title>
+    <link rel="stylesheet" href="/src/index.css" />
+    <style>
+      html, body { margin: 0; height: 100%; background: #0a0a0c; }
+      .backdrop {
+        position: fixed; inset: 0;
+        background: repeating-linear-gradient(90deg, #fff 0 16px, #e11 16px 32px);
+      }
+      .wrap {
+        position: absolute; top: 20px; right: 20px; z-index: 40;
+      }
+      .win { width: 436px; height: 720px; }
+      .content { padding: 24px; color: #fff; font: 16px/1.5 sans-serif; }
+      .dot { width: 4px; height: 4px; border-radius: 50%; background: #fff; }
+    </style>
+  </head>
+  <body>
+    <div class="backdrop"></div>
+    <div class="wrap">
+      <div class="liquid-window win">
+        <div class="liquid-frost"></div>
+        <div class="liquid-tint"></div>
+        <div class="liquid-sheen"></div>
+        <div class="liquid-rim"></div>
+        <div class="liquid-grain"></div>
+        <div class="relative z-10 flex min-h-0 flex-1 flex-col">
+          <div class="content">
+            <p>Header text on glass</p>
+            <p>Second line of copy</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

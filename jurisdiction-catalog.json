@@ -1,0 +1,626 @@
+{
+  "jurisdictions": [
+    {
+      "code": "TR",
+      "labelTr": "Türkiye",
+      "procedureFamilies": [
+        "HMK",
+        "IYUK",
+        "CMK",
+        "IIK"
+      ],
+      "caseLawConnectors": [
+        "danistay",
+        "uyap-emsal",
+        "aym",
+        "mevzuat"
+      ],
+      "courts": [
+        {
+          "id": "tr-asliye-hukuk",
+          "labelTr": "Asliye Hukuk",
+          "labelLocal": "Asliye Hukuk Mahkemesi",
+          "kind": "civil-first"
+        },
+        {
+          "id": "tr-asliye-ceza",
+          "labelTr": "Asliye Ceza",
+          "labelLocal": "Asliye Ceza Mahkemesi",
+          "kind": "criminal-first"
+        },
+        {
+          "id": "tr-agir-ceza",
+          "labelTr": "Ağır Ceza",
+          "labelLocal": "Ağır Ceza Mahkemesi",
+          "kind": "criminal-first"
+        },
+        {
+          "id": "tr-bam",
+          "labelTr": "BAM",
+          "labelLocal": "Bölge Adliye Mahkemesi",
+          "kind": "appeal"
+        },
+        {
+          "id": "tr-yargitay",
+          "labelTr": "Yargıtay",
+          "labelLocal": "Yargıtay",
+          "kind": "supreme-ordinary"
+        },
+        {
+          "id": "tr-idare",
+          "labelTr": "İdare",
+          "labelLocal": "İdare Mahkemesi",
+          "kind": "admin-first"
+        },
+        {
+          "id": "tr-bim",
+          "labelTr": "BİM",
+          "labelLocal": "Bölge İdare Mahkemesi",
+          "kind": "admin-appeal"
+        },
+        {
+          "id": "tr-danistay",
+          "labelTr": "Danıştay",
+          "labelLocal": "Danıştay",
+          "kind": "supreme-admin"
+        },
+        {
+          "id": "tr-aym",
+          "labelTr": "AYM",
+          "labelLocal": "Anayasa Mahkemesi",
+          "kind": "constitutional"
+        },
+        {
+          "id": "tr-is",
+          "labelTr": "İş",
+          "labelLocal": "İş Mahkemesi",
+          "kind": "labour"
+        },
+        {
+          "id": "tr-ticaret",
+          "labelTr": "Ticaret",
+          "labelLocal": "Asliye Ticaret Mahkemesi",
+          "kind": "commercial"
+        },
+        {
+          "id": "tr-icra",
+          "labelTr": "İcra",
+          "labelLocal": "İcra Mahkemesi",
+          "kind": "enforcement"
+        }
+      ],
+      "statutes": [
+        {
+          "code": "TCK",
+          "number": "5237",
+          "titleTr": "Türk Ceza Kanunu",
+          "family": "criminal"
+        },
+        {
+          "code": "CMK",
+          "number": "5271",
+          "titleTr": "Ceza Muhakemesi Kanunu",
+          "family": "criminal-procedure"
+        },
+        {
+          "code": "HMK",
+          "number": "6100",
+          "titleTr": "Hukuk Muhakemeleri Kanunu",
+          "family": "civil-procedure"
+        },
+        {
+          "code": "IYUK",
+          "number": "2577",
+          "titleTr": "İdari Yargılama Usulü Kanunu",
+          "family": "admin-procedure"
+        },
+        {
+          "code": "TMK",
+          "number": "4721",
+          "titleTr": "Türk Medeni Kanunu",
+          "family": "civil"
+        },
+        {
+          "code": "TBK",
+          "number": "6098",
+          "titleTr": "Türk Borçlar Kanunu",
+          "family": "civil"
+        },
+        {
+          "code": "TTK",
+          "number": "6102",
+          "titleTr": "Türk Ticaret Kanunu",
+          "family": "commercial"
+        },
+        {
+          "code": "IIK",
+          "number": "2004",
+          "titleTr": "İcra ve İflas Kanunu",
+          "family": "enforcement"
+        },
+        {
+          "code": "KVKK",
+          "number": "6698",
+          "titleTr": "Kişisel Verilerin Korunması Kanunu",
+          "family": "data"
+        },
+        {
+          "code": "6284",
+          "number": "6284",
+          "titleTr": "Ailenin Korunması ve Kadına Karşı Şiddetin Önlenmesi",
+          "family": "other"
+        }
+      ]
+    },
+    {
+      "code": "UK-EWH",
+      "labelTr": "İngiltere ve Galler",
+      "procedureFamilies": [
+        "CPR",
+        "CrimPR",
+        "FPR"
+      ],
+      "caseLawConnectors": [
+        "uk-find-case-law",
+        "bailii"
+      ],
+      "courts": [
+        {
+          "id": "uk-ew-mag",
+          "labelTr": "Magistrates",
+          "labelLocal": "Magistrates' Court",
+          "kind": "criminal-first"
+        },
+        {
+          "id": "uk-ew-crown",
+          "labelTr": "Crown Court",
+          "labelLocal": "Crown Court",
+          "kind": "criminal-first"
+        },
+        {
+          "id": "uk-ew-county",
+          "labelTr": "County Court",
+          "labelLocal": "County Court",
+          "kind": "civil-first"
+        },
+        {
+          "id": "uk-ew-hc",
+          "labelTr": "High Court",
+          "labelLocal": "High Court of Justice",
+          "kind": "appeal"
+        },
+        {
+          "id": "uk-ew-cacd",
+          "labelTr": "İstinaf Ceza",
+          "labelLocal": "Court of Appeal Criminal Division",
+          "kind": "appeal"
+        },
+        {
+          "id": "uk-uksc",
+          "labelTr": "UK Yüksek Mahkemesi",
+          "labelLocal": "UK Supreme Court",
+          "kind": "supreme-ordinary"
+        }
+      ],
+      "statutes": [
+        {
+          "code": "CrimPR",
+          "titleTr": "Criminal Procedure Rules 2025",
+          "family": "criminal-procedure"
+        },
+        {
+          "code": "CPR",
+          "titleTr": "Civil Procedure Rules",
+          "family": "civil-procedure"
+        },
+        {
+          "code": "DPA",
+          "number": "2018",
+          "titleTr": "Data Protection Act 2018",
+          "family": "data"
+        },
+        {
+          "code": "SA",
+          "number": "2020",
+          "titleTr": "Sentencing Act 2020",
+          "family": "criminal"
+        }
+      ]
+    },
+    {
+      "code": "DE",
+      "labelTr": "Almanya",
+      "procedureFamilies": [
+        "ZPO",
+        "StPO",
+        "VwGO"
+      ],
+      "caseLawConnectors": [
+        "bgh",
+        "bverfg"
+      ],
+      "courts": [
+        {
+          "id": "de-ag",
+          "labelTr": "Amtsgericht",
+          "labelLocal": "Amtsgericht",
+          "kind": "civil-first"
+        },
+        {
+          "id": "de-lg",
+          "labelTr": "Landgericht",
+          "labelLocal": "Landgericht",
+          "kind": "civil-first"
+        },
+        {
+          "id": "de-olg",
+          "labelTr": "OLG",
+          "labelLocal": "Oberlandesgericht",
+          "kind": "appeal"
+        },
+        {
+          "id": "de-bgh",
+          "labelTr": "BGH",
+          "labelLocal": "Bundesgerichtshof",
+          "kind": "supreme-ordinary"
+        },
+        {
+          "id": "de-bverfg",
+          "labelTr": "BVerfG",
+          "labelLocal": "Bundesverfassungsgericht",
+          "kind": "constitutional"
+        }
+      ],
+      "statutes": [
+        {
+          "code": "StGB",
+          "titleTr": "Strafgesetzbuch",
+          "family": "criminal"
+        },
+        {
+          "code": "StPO",
+          "titleTr": "Strafprozessordnung",
+          "family": "criminal-procedure"
+        },
+        {
+          "code": "BGB",
+          "titleTr": "Bürgerliches Gesetzbuch",
+          "family": "civil"
+        },
+        {
+          "code": "ZPO",
+          "titleTr": "Zivilprozessordnung",
+          "family": "civil-procedure"
+        },
+        {
+          "code": "GG",
+          "titleTr": "Grundgesetz",
+          "family": "other"
+        }
+      ]
+    },
+    {
+      "code": "FR",
+      "labelTr": "Fransa",
+      "procedureFamilies": [
+        "CPC_FR",
+        "CPP_FR"
+      ],
+      "caseLawConnectors": [
+        "legifrance",
+        "judilibre"
+      ],
+      "courts": [
+        {
+          "id": "fr-tj",
+          "labelTr": "Tribunal judiciaire",
+          "labelLocal": "Tribunal judiciaire",
+          "kind": "civil-first"
+        },
+        {
+          "id": "fr-ca",
+          "labelTr": "Cour d'appel",
+          "labelLocal": "Cour d'appel",
+          "kind": "appeal"
+        },
+        {
+          "id": "fr-cass",
+          "labelTr": "Cour de cassation",
+          "labelLocal": "Cour de cassation",
+          "kind": "supreme-ordinary"
+        },
+        {
+          "id": "fr-ce",
+          "labelTr": "Conseil d'État",
+          "labelLocal": "Conseil d'État",
+          "kind": "supreme-admin"
+        }
+      ],
+      "statutes": [
+        {
+          "code": "Code pénal",
+          "titleTr": "Code pénal",
+          "family": "criminal"
+        },
+        {
+          "code": "CPP",
+          "titleTr": "Code de procédure pénale",
+          "family": "criminal-procedure"
+        },
+        {
+          "code": "CPC",
+          "titleTr": "Code de procédure civile",
+          "family": "civil-procedure"
+        },
+        {
+          "code": "Code civil",
+          "titleTr": "Code civil",
+          "family": "civil"
+        }
+      ]
+    },
+    {
+      "code": "ECHR",
+      "labelTr": "AİHM / AİHS",
+      "procedureFamilies": [
+        "ECHR_RULES"
+      ],
+      "caseLawConnectors": [
+        "hudoc"
+      ],
+      "courts": [
+        {
+          "id": "echr",
+          "labelTr": "AİHM",
+          "labelLocal": "European Court of Human Rights",
+          "kind": "human-rights"
+        }
+      ],
+      "statutes": [
+        {
+          "code": "ECHR",
+          "titleTr": "Avrupa İnsan Hakları Sözleşmesi",
+          "family": "other"
+        }
+      ]
+    },
+    {
+      "code": "EU-CJEU",
+      "labelTr": "ABAD",
+      "procedureFamilies": [
+        "CJEU_RP"
+      ],
+      "caseLawConnectors": [
+        "curia",
+        "eurlex"
+      ],
+      "courts": [
+        {
+          "id": "cjeu",
+          "labelTr": "ABAD",
+          "labelLocal": "Court of Justice of the EU",
+          "kind": "eu"
+        }
+      ],
+      "statutes": [
+        {
+          "code": "TFEU",
+          "titleTr": "ABİİA",
+          "family": "other"
+        }
+      ]
+    },
+    {
+      "code": "ICC-ARB",
+      "labelTr": "ICC Tahkim",
+      "procedureFamilies": [
+        "ICC_RULES"
+      ],
+      "caseLawConnectors": [],
+      "courts": [
+        {
+          "id": "icc-arb",
+          "labelTr": "ICC",
+          "labelLocal": "ICC International Court of Arbitration",
+          "kind": "intl-arb"
+        }
+      ],
+      "statutes": [
+        {
+          "code": "ICC Rules",
+          "titleTr": "ICC Arbitration Rules",
+          "family": "other"
+        }
+      ]
+    },
+    {
+      "code": "NL",
+      "labelTr": "Hollanda",
+      "procedureFamilies": [
+        "Rv_NL"
+      ],
+      "caseLawConnectors": [
+        "rechtspraak"
+      ],
+      "courts": [
+        {
+          "id": "nl-rb",
+          "labelTr": "Rechtbank",
+          "labelLocal": "Rechtbank",
+          "kind": "civil-first"
+        },
+        {
+          "id": "nl-hr",
+          "labelTr": "Hoge Raad",
+          "labelLocal": "Hoge Raad",
+          "kind": "supreme-ordinary"
+        }
+      ],
+      "statutes": [
+        {
+          "code": "Sr",
+          "titleTr": "Wetboek van Strafrecht",
+          "family": "criminal"
+        },
+        {
+          "code": "Sv",
+          "titleTr": "Wetboek van Strafvordering",
+          "family": "criminal-procedure"
+        },
+        {
+          "code": "BW",
+          "titleTr": "Burgerlijk Wetboek",
+          "family": "civil"
+        }
+      ]
+    },
+    {
+      "code": "IT",
+      "labelTr": "İtalya",
+      "procedureFamilies": [
+        "CPC_IT"
+      ],
+      "caseLawConnectors": [
+        "italgiure"
+      ],
+      "courts": [
+        {
+          "id": "it-trib",
+          "labelTr": "Tribunale",
+          "labelLocal": "Tribunale",
+          "kind": "civil-first"
+        },
+        {
+          "id": "it-cass",
+          "labelTr": "Cassazione",
+          "labelLocal": "Corte di Cassazione",
+          "kind": "supreme-ordinary"
+        }
+      ],
+      "statutes": [
+        {
+          "code": "c.p.",
+          "titleTr": "Codice penale",
+          "family": "criminal"
+        },
+        {
+          "code": "c.p.p.",
+          "titleTr": "Codice di procedura penale",
+          "family": "criminal-procedure"
+        }
+      ]
+    },
+    {
+      "code": "ES",
+      "labelTr": "İspanya",
+      "procedureFamilies": [
+        "LEC_ES"
+      ],
+      "caseLawConnectors": [
+        "cendoj"
+      ],
+      "courts": [
+        {
+          "id": "es-ts",
+          "labelTr": "Tribunal Supremo",
+          "labelLocal": "Tribunal Supremo",
+          "kind": "supreme-ordinary"
+        }
+      ],
+      "statutes": [
+        {
+          "code": "CP",
+          "titleTr": "Código Penal",
+          "family": "criminal"
+        },
+        {
+          "code": "LECrim",
+          "titleTr": "Ley de Enjuiciamiento Criminal",
+          "family": "criminal-procedure"
+        }
+      ]
+    },
+    {
+      "code": "CH",
+      "labelTr": "İsviçre",
+      "procedureFamilies": [
+        "ZPO_CH",
+        "StPO_CH"
+      ],
+      "caseLawConnectors": [
+        "bger"
+      ],
+      "courts": [
+        {
+          "id": "ch-bger",
+          "labelTr": "Bundesgericht",
+          "labelLocal": "Bundesgericht",
+          "kind": "supreme-ordinary"
+        }
+      ],
+      "statutes": [
+        {
+          "code": "StGB",
+          "titleTr": "Schweizerisches StGB",
+          "family": "criminal"
+        }
+      ]
+    },
+    {
+      "code": "AT",
+      "labelTr": "Avusturya",
+      "procedureFamilies": [
+        "ZPO_AT",
+        "StPO_AT"
+      ],
+      "caseLawConnectors": [
+        "ris"
+      ],
+      "courts": [
+        {
+          "id": "at-ogh",
+          "labelTr": "OGH",
+          "labelLocal": "Oberster Gerichtshof",
+          "kind": "supreme-ordinary"
+        }
+      ],
+      "statutes": [
+        {
+          "code": "StGB",
+          "titleTr": "öStGB",
+          "family": "criminal"
+        },
+        {
+          "code": "ABGB",
+          "titleTr": "ABGB",
+          "family": "civil"
+        }
+      ]
+    },
+    {
+      "code": "BE",
+      "labelTr": "Belçika",
+      "procedureFamilies": [
+        "BE_JUD"
+      ],
+      "caseLawConnectors": [
+        "juportal"
+      ],
+      "courts": [
+        {
+          "id": "be-cass",
+          "labelTr": "Cour de cassation",
+          "labelLocal": "Hof van Cassatie",
+          "kind": "supreme-ordinary"
+        }
+      ],
+      "statutes": [
+        {
+          "code": "Code pénal",
+          "titleTr": "Code pénal belge",
+          "family": "criminal"
+        }
+      ]
+    }
+  ]
+}

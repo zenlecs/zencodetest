@@ -1,0 +1,13 @@
+node_modules
+dist
+dist-electron
+.DS_Store
+server/public
+vite.config.ts.*
+*.tar.gz
+.env
+.local
+.second-session
+*.log
+.zenlecs_db*
+.zenvault

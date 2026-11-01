@@ -1,0 +1,28 @@
+﻿<!doctype html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<style>
+  html,body{margin:0;background:#111;font-family:sans-serif}
+  .scene{position:relative;width:800px;height:600px;overflow:hidden}
+  .stripe{position:absolute;inset:0;background:repeating-linear-gradient(90deg,#fff 0 24px,#e11 24px 48px)}
+  .text{position:absolute;left:40px;top:120px;color:#000;font-size:56px;font-weight:800;letter-spacing:-2px}
+  .glass{position:absolute;left:300px;top:120px;width:300px;height:260px;border-radius:30px;overflow:hidden;border:1px solid rgba(255,255,255,.4);isolation:isolate}
+  .frost{position:absolute;inset:0;backdrop-filter:blur(28px) saturate(1.8);background:rgba(17,19,25,.25)}
+  .bad{filter:blur(0px)}
+  .t{position:absolute;z-index:5;left:320px;top:140px;color:#fff;font-size:20px}
+</style>
+</head>
+<body>
+<div class="scene">
+  <div class="stripe"></div>
+  <div class="text">BLUR TEST</div>
+  <div class="glass"><div class="frost"></div></div>
+  <div class="t">glass?</div>
+</div>
+<script>
+  // also a variant with isolation
+  const s=document.createElement('div'); s.className='scene'; s.style.top='0'; document.body.appendChild(s);
+</script>
+</body>
+</html>

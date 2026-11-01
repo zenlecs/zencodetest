@@ -1,0 +1,2006 @@
+@import url('https://fonts.cdnfonts.com/css/google-sans');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Local Google Sans — variable first (opsz/wght), static faces as weight-accurate fallbacks */
+@font-face {
+  font-family: 'Google Sans';
+  src: url('/fonts/Google%20Sans/GoogleSans-VariableFont_GRAD,opsz,wght.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Google Sans';
+  src: url('/fonts/Google%20Sans/GoogleSans-Italic-VariableFont_GRAD,opsz,wght.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Google Sans';
+  src: url('/fonts/Google%20Sans/GoogleSans-Regular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Google Sans';
+  src: url('/fonts/Google%20Sans/GoogleSans-Italic.ttf') format('truetype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Google Sans';
+  src: url('/fonts/Google%20Sans/GoogleSans-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Google Sans';
+  src: url('/fonts/Google%20Sans/GoogleSans-MediumItalic.ttf') format('truetype');
+  font-weight: 500;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Google Sans';
+  src: url('/fonts/Google%20Sans/GoogleSans-SemiBold.ttf') format('truetype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Google Sans';
+  src: url('/fonts/Google%20Sans/GoogleSans-SemiBoldItalic.ttf') format('truetype');
+  font-weight: 600;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Google Sans';
+  src: url('/fonts/Google%20Sans/GoogleSans-Bold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Google Sans';
+  src: url('/fonts/Google%20Sans/GoogleSans-BoldItalic.ttf') format('truetype');
+  font-weight: 700;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Kanit Local';
+  src: url('/fonts/Kanit/Kanit-Light.ttf') format('truetype');
+  font-weight: 300;
+  font-style: normal;
+}
+
+.font-google-sans {
+  font-family: 'Google Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Form controls / placeholders often ignore parent font — force inherit */
+.font-google-sans input,
+.font-google-sans input::placeholder,
+.font-google-sans textarea,
+.font-google-sans textarea::placeholder,
+.font-google-sans button,
+.font-google-sans select,
+.font-google-sans option {
+  font-family: inherit !important;
+}
+
+/* Price/Balance Font - Kanit Regular 400 */
+.font-price {
+  font-family: 'Kanit', sans-serif;
+  font-weight: 400;
+}
+
+/* Local Kanit (bundled TTF) - used for landing nav; falls back to Google Kanit then system sans */
+.font-kanit-local {
+  font-family: 'Kanit Local', 'Kanit', sans-serif;
+}
+
+/* Local Plus Jakarta Sans (bundled TTF) */
+@font-face {
+  font-family: 'Plus Jakarta Sans';
+  src: url('/fonts/Plus%20Jakarta/PlusJakartaSans-Medium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+}
+
+.font-plus-jakarta {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+}
+
+/* Custom Scrollbar for Electron Chromium */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.light ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.light ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+/* Grid Edit Mode Shake Animation */
+@keyframes grid-shake {
+  0%, 100% { transform: rotate(0deg); }
+  10% { transform: rotate(-1deg); }
+  20% { transform: rotate(1deg); }
+  30% { transform: rotate(-1deg); }
+  40% { transform: rotate(1deg); }
+  50% { transform: rotate(-0.5deg); }
+  60% { transform: rotate(0.5deg); }
+  70% { transform: rotate(-0.5deg); }
+  80% { transform: rotate(0.5deg); }
+  90% { transform: rotate(0deg); }
+}
+
+.grid-shake {
+  animation: grid-shake 0.6s ease-in-out 2;
+}
+
+.grid-editing {
+  cursor: grab;
+  outline: 2px dashed rgba(255, 255, 255, 0.3);
+  outline-offset: 4px;
+}
+
+.grid-editing:active {
+  cursor: grabbing;
+}
+
+.grid-dragging {
+  opacity: 0.5;
+  transform: scale(1.02);
+}
+
+.grid-drop-target {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 4px;
+}
+
+/* Voice Message Reactive Spectrum Effect */
+@keyframes pulse-glow-red {
+  0%, 100% { 
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.05);
+    border-color: rgba(239, 68, 68, 0.15);
+  }
+  50% { 
+    box-shadow: 0 0 35px rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.25);
+  }
+}
+
+/* iOS-Style Fluid Window Resizing */
+#root {
+  width: 100vw;
+  height: 100vh;
+  transition: padding 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), border-radius 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+  overflow: hidden;
+}
+
+body {
+  background-color: transparent !important;
+}
+
+/* When the app resizes, all flex/grid layout changes feel springy */
+.flex-1 {
+  transition: flex 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.1) !important;
+}
+
+@keyframes pulse-glow-blue {
+  0%, 100% { 
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.05);
+    border-color: rgba(59, 130, 246, 0.15);
+  }
+  50% { 
+    box-shadow: 0 0 35px rgba(59, 130, 246, 0.1);
+    border-color: rgba(59, 130, 246, 0.25);
+  }
+}
+
+/* Wallet Grid Scale Hover Effect - Like Sidebar Icons */
+.wallet-item {
+  background: rgba(0, 0, 0, 0.03);
+  transform: scale(1);
+  transition: transform 0.15s ease-out, box-shadow 0.15s ease-out;
+  transform-origin: center center;
+}
+
+.dark .wallet-item {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.wallet-item:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.dark .wallet-item:hover {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.wallet-item:active {
+  transform: scale(0.98);
+}
+
+/* Transaction Item Scale Hover */
+.tx-item {
+  background: rgba(0, 0, 0, 0.03);
+  transform: scale(1);
+  transition: transform 0.15s ease-out, box-shadow 0.15s ease-out;
+  transform-origin: center center;
+}
+
+.dark .tx-item {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.tx-item:hover {
+  transform: scale(1.015);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.dark .tx-item:hover {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+}
+
+.tx-item:active {
+  transform: scale(0.98);
+}
+
+/* LIGHT MODE */
+:root {
+  --button-outline: rgba(0,0,0, .10);
+  --badge-outline: rgba(0,0,0, .05);
+  --opaque-button-border-intensity: -8;
+  --elevate-1: rgba(0,0,0, .03);
+  --elevate-2: rgba(0,0,0, .08);
+  --background: 210 5% 98%;
+  --foreground: 210 6% 12%;
+  --border: 210 5% 90%;
+  --card: 210 5% 96%;
+  --card-foreground: 210 6% 14%;
+  --card-border: 210 5% 92%;
+  --sidebar: 210 5% 94%;
+  --sidebar-foreground: 210 6% 16%;
+  --sidebar-border: 210 5% 88%;
+  --sidebar-primary: 215 85% 28%;
+  --sidebar-primary-foreground: 215 20% 98%;
+  --sidebar-accent: 210 6% 88%;
+  --sidebar-accent-foreground: 210 6% 20%;
+  --sidebar-ring: 215 85% 28%;
+  --popover: 210 5% 92%;
+  --popover-foreground: 210 6% 18%;
+  --popover-border: 210 5% 86%;
+  --primary: 215 85% 28%;
+  --primary-foreground: 215 20% 98%;
+  --secondary: 210 6% 86%;
+  --secondary-foreground: 210 6% 22%;
+  --muted: 210 8% 88%;
+  --muted-foreground: 210 6% 38%;
+  --accent: 210 10% 90%;
+  --accent-foreground: 210 6% 24%;
+  --destructive: 0 72% 32%;
+  --destructive-foreground: 0 20% 98%;
+  --input: 210 12% 75%;
+  --ring: 215 85% 28%;
+  --chart-1: 215 85% 28%;
+  --chart-2: 195 75% 32%;
+  --chart-3: 235 70% 35%;
+  --chart-4: 280 65% 38%;
+  --chart-5: 160 60% 35%;
+  --font-sans: "Google Sans", system-ui, sans-serif;
+  --font-serif: Georgia, serif;
+  --font-mono: JetBrains Mono, Menlo, monospace;
+  --radius: .5rem;
+  --shadow-2xs: 0px 2px 0px 0px hsl(210 5% 50% / 0.00);
+  --shadow-xs: 0px 2px 0px 0px hsl(210 5% 50% / 0.00);
+  --shadow-sm: 0px 2px 0px 0px hsl(210 5% 50% / 0.00), 0px 1px 2px -1px hsl(210 5% 50% / 0.00);
+  --shadow: 0px 2px 0px 0px hsl(210 5% 50% / 0.00), 0px 1px 2px -1px hsl(210 5% 50% / 0.00);
+  --shadow-md: 0px 2px 0px 0px hsl(210 5% 50% / 0.00), 0px 2px 4px -1px hsl(210 5% 50% / 0.00);
+  --shadow-lg: 0px 2px 0px 0px hsl(210 5% 50% / 0.00), 0px 4px 6px -1px hsl(210 5% 50% / 0.00);
+  --shadow-xl: 0px 2px 0px 0px hsl(210 5% 50% / 0.00), 0px 8px 10px -1px hsl(210 5% 50% / 0.00);
+  --shadow-2xl: 0px 2px 0px 0px hsl(210 5% 50% / 0.00);
+  --tracking-normal: 0em;
+  --spacing: 0.25rem;
+
+/* Fallback for older browsers */
+  --sidebar-primary-border: hsl(var(--sidebar-primary));
+  --sidebar-primary-border: hsl(from hsl(var(--sidebar-primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+
+  /* Fallback for older browsers */
+  --sidebar-accent-border: hsl(var(--sidebar-accent));
+  --sidebar-accent-border: hsl(from hsl(var(--sidebar-accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+
+  /* Fallback for older browsers */
+  --primary-border: hsl(var(--primary));
+  --primary-border: hsl(from hsl(var(--primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+
+  /* Fallback for older browsers */
+  --secondary-border: hsl(var(--secondary));
+  --secondary-border: hsl(from hsl(var(--secondary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+
+  /* Fallback for older browsers */
+  --muted-border: hsl(var(--muted));
+  --muted-border: hsl(from hsl(var(--muted)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+
+  /* Fallback for older browsers */
+  --accent-border: hsl(var(--accent));
+  --accent-border: hsl(from hsl(var(--accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+
+  /* Fallback for older browsers */
+  --destructive-border: hsl(var(--destructive));
+  --destructive-border: hsl(from hsl(var(--destructive)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+}
+
+.dark {
+  --button-outline: rgba(255,255,255, .10);
+  --badge-outline: rgba(255,255,255, .05);
+  --opaque-button-border-intensity: 9;
+  --elevate-1: rgba(255,255,255, .04);
+  --elevate-2: rgba(255,255,255, .09);
+  --background: 210 6% 8%;
+  --foreground: 210 5% 92%;
+  --border: 210 6% 18%;
+  --card: 210 6% 10%;
+  --card-foreground: 210 5% 90%;
+  --card-border: 210 6% 14%;
+  --sidebar: 210 6% 12%;
+  --sidebar-foreground: 210 5% 88%;
+  --sidebar-border: 210 6% 16%;
+  --sidebar-primary: 215 85% 28%;
+  --sidebar-primary-foreground: 215 20% 98%;
+  --sidebar-accent: 210 8% 16%;
+  --sidebar-accent-foreground: 210 5% 85%;
+  --sidebar-ring: 215 75% 45%;
+  --popover: 210 6% 14%;
+  --popover-foreground: 210 5% 86%;
+  --popover-border: 210 6% 20%;
+  --primary: 215 85% 28%;
+  --primary-foreground: 215 20% 98%;
+  --secondary: 210 8% 18%;
+  --secondary-foreground: 210 5% 84%;
+  --muted: 210 10% 20%;
+  --muted-foreground: 210 5% 65%;
+  --accent: 210 12% 18%;
+  --accent-foreground: 210 5% 82%;
+  --destructive: 0 72% 32%;
+  --destructive-foreground: 0 20% 98%;
+  --input: 210 15% 30%;
+  --ring: 215 75% 45%;
+  --chart-1: 215 75% 55%;
+  --chart-2: 195 70% 58%;
+  --chart-3: 235 65% 62%;
+  --chart-4: 280 60% 65%;
+  --chart-5: 160 55% 60%;
+  --shadow-2xs: 0px 2px 0px 0px hsl(210 6% 5% / 0.00);
+  --shadow-xs: 0px 2px 0px 0px hsl(210 6% 5% / 0.00);
+  --shadow-sm: 0px 2px 0px 0px hsl(210 6% 5% / 0.00), 0px 1px 2px -1px hsl(210 6% 5% / 0.00);
+  --shadow: 0px 2px 0px 0px hsl(210 6% 5% / 0.00), 0px 1px 2px -1px hsl(210 6% 5% / 0.00);
+  --shadow-md: 0px 2px 0px 0px hsl(210 6% 5% / 0.00), 0px 2px 4px -1px hsl(210 6% 5% / 0.00);
+  --shadow-lg: 0px 2px 0px 0px hsl(210 6% 5% / 0.00), 0px 4px 6px -1px hsl(210 6% 5% / 0.00);
+  --shadow-xl: 0px 2px 0px 0px hsl(210 6% 5% / 0.00), 0px 8px 10px -1px hsl(210 6% 5% / 0.00);
+  --shadow-2xl: 0px 2px 0px 0px hsl(210 6% 5% / 0.00);
+
+/* Fallback for older browsers */
+  --sidebar-primary-border: hsl(var(--sidebar-primary));
+  --sidebar-primary-border: hsl(from hsl(var(--sidebar-primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+
+  /* Fallback for older browsers */
+  --sidebar-accent-border: hsl(var(--sidebar-accent));
+  --sidebar-accent-border: hsl(from hsl(var(--sidebar-accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+
+  /* Fallback for older browsers */
+  --primary-border: hsl(var(--primary));
+  --primary-border: hsl(from hsl(var(--primary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+
+  /* Fallback for older browsers */
+  --secondary-border: hsl(var(--secondary));
+  --secondary-border: hsl(from hsl(var(--secondary)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+
+  /* Fallback for older browsers */
+  --muted-border: hsl(var(--muted));
+  --muted-border: hsl(from hsl(var(--muted)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+
+  /* Fallback for older browsers */
+  --accent-border: hsl(var(--accent));
+  --accent-border: hsl(from hsl(var(--accent)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+
+  /* Fallback for older browsers */
+  --destructive-border: hsl(var(--destructive));
+  --destructive-border: hsl(from hsl(var(--destructive)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    background-color: transparent !important;
+  }
+
+  body {
+    @apply font-sans antialiased text-foreground;
+    background-color: transparent !important;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-user-drag: none;
+  }
+
+  input, textarea, [contenteditable="true"], [contenteditable="plaintext-only"] {
+    user-select: text;
+    -webkit-user-select: text;
+  }
+
+  img, svg, a {
+    -webkit-user-drag: none;
+  }
+}
+
+/**
+ * Using the elevate system.
+ * Automatic contrast adjustment.
+ *
+ * <element className="hover-elevate" />
+ * <element className="active-elevate-2" />
+ *
+ * // Using the tailwind utility when a data attribute is "on"
+ * <element className="toggle-elevate data-[state=on]:toggle-elevated" />
+ * // Or manually controlling the toggle state
+ * <element className="toggle-elevate toggle-elevated" />
+ *
+ * Elevation systems have to handle many states.
+ * - not-hovered, vs. hovered vs. active  (three mutually exclusive states)
+ * - toggled or not
+ * - focused or not (this is not handled with these utilities)
+ *
+ * Even without handling focused or not, this is six possible combinations that
+ * need to be distinguished from eachother visually.
+ */
+@layer utilities {
+
+  /* Hide ugly search cancel button in Chrome until we can style it properly */
+  input[type="search"]::-webkit-search-cancel-button {
+    @apply hidden;
+  }
+
+  /* Placeholder styling for contentEditable div */
+  [contenteditable][data-placeholder]:empty::before {
+    content: attr(data-placeholder);
+    color: hsl(var(--muted-foreground));
+    pointer-events: none;
+  }
+
+  /* Smooth radial gradient hover effect for grid cards */
+  .hover-radial {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .hover-radial::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    background: radial-gradient(circle at center, hsl(var(--primary) / 0.05) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  
+  .hover-radial:hover::before {
+    opacity: 1;
+  }
+  
+  .hover-radial > * {
+    position: relative;
+    z-index: 1;
+  }
+
+
+  /* .no-default-hover-elevate/no-default-active-elevate is an escape hatch so consumers of
+   * buttons/badges can remove the automatic brightness adjustment on interactions
+   * and program their own. */
+  .no-default-hover-elevate {}
+
+  .no-default-active-elevate {}
+
+
+  /**
+   * Toggleable backgrounds go behind the content. Hoverable/active goes on top.
+   * This way they can stack/compound. Both will overlap the parent's borders!
+   * So borders will be automatically adjusted both on toggle, and hover/active,
+   * and they will be compounded.
+   */
+  .toggle-elevate::before,
+  .toggle-elevate-2::before {
+    content: "";
+    pointer-events: none;
+    position: absolute;
+    inset: 0px;
+    /*border-radius: inherit;   match rounded corners */
+    border-radius: inherit;
+    z-index: -1;
+    /* sits behind content but above backdrop */
+  }
+
+  .toggle-elevate.toggle-elevated::before {
+    background-color: var(--elevate-2);
+  }
+
+  /* If there's a 1px border, adjust the inset so that it covers that parent's border */
+  .border.toggle-elevate::before {
+    inset: -1px;
+  }
+
+  /* Does not work on elements with overflow:hidden! */
+  .hover-elevate:not(.no-default-hover-elevate),
+  .active-elevate:not(.no-default-active-elevate),
+  .hover-elevate-2:not(.no-default-hover-elevate),
+  .active-elevate-2:not(.no-default-active-elevate) {
+    position: relative;
+    z-index: 0;
+  }
+
+  .hover-elevate:not(.no-default-hover-elevate)::after,
+  .active-elevate:not(.no-default-active-elevate)::after,
+  .hover-elevate-2:not(.no-default-hover-elevate)::after,
+  .active-elevate-2:not(.no-default-active-elevate)::after {
+    content: "";
+    pointer-events: none;
+    position: absolute;
+    inset: 0px;
+    /*border-radius: inherit;   match rounded corners */
+    border-radius: inherit;
+    z-index: 999;
+    /* sits in front of content */
+  }
+
+  .hover-elevate:hover:not(.no-default-hover-elevate)::after,
+  .active-elevate:active:not(.no-default-active-elevate)::after {
+    background-color: var(--elevate-1);
+  }
+
+  .hover-elevate-2:hover:not(.no-default-hover-elevate)::after,
+  .active-elevate-2:active:not(.no-default-active-elevate)::after {
+    background-color: var(--elevate-2);
+  }
+
+  /* If there's a 1px border, adjust the inset so that it covers that parent's border */
+  .border.hover-elevate:not(.no-hover-interaction-elevate)::after,
+  .border.active-elevate:not(.no-active-interaction-elevate)::after,
+  .border.hover-elevate-2:not(.no-hover-interaction-elevate)::after,
+  .border.active-elevate-2:not(.no-active-interaction-elevate)::after,
+  .border.hover-elevate:not(.no-hover-interaction-elevate)::after {
+    inset: -1px;
+  }
+}
+
+/* ZenFile Pattern Animation */
+.zenfile-pattern {
+  --color-0: #fff;
+  --color-1: #111;
+  --color-2: #222;
+  --color-3: #333;
+  --color-4: #2e2e2e;
+  --color-5: #d2b48c;
+  --color-6: #b22222;
+  --color-7: #871a1a;
+  --color-8: #ff6347;
+  --color-9: #ff3814;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  inset: 0;
+  background-color: var(--color-1);
+  background-image: linear-gradient(to top, var(--color-2) 5%, var(--color-1) 6%, var(--color-1) 7%, transparent 7%),
+    linear-gradient(to bottom, var(--color-1) 30%, transparent 80%),
+    linear-gradient(to right, var(--color-2), var(--color-4) 5%, transparent 5%),
+    linear-gradient(to right, transparent 6%, var(--color-2) 6%, var(--color-4) 9%, transparent 9%),
+    linear-gradient(to right, transparent 27%, var(--color-2) 27%, var(--color-4) 34%, transparent 34%),
+    linear-gradient(to right, transparent 51%, var(--color-2) 51%, var(--color-4) 57%, transparent 57%),
+    linear-gradient(to bottom, var(--color-1) 35%, transparent 35%),
+    linear-gradient(to right, transparent 42%, var(--color-2) 42%, var(--color-4) 44%, transparent 44%),
+    linear-gradient(to right, transparent 45%, var(--color-2) 45%, var(--color-4) 47%, transparent 47%),
+    linear-gradient(to right, transparent 48%, var(--color-2) 48%, var(--color-4) 50%, transparent 50%),
+    linear-gradient(to right, transparent 87%, var(--color-2) 87%, var(--color-4) 91%, transparent 91%),
+    linear-gradient(to bottom, var(--color-1) 37.5%, transparent 37.5%),
+    linear-gradient(to right, transparent 14%, var(--color-2) 14%, var(--color-4) 20%, transparent 20%),
+    linear-gradient(to bottom, var(--color-1) 40%, transparent 40%),
+    linear-gradient(to right, transparent 10%, var(--color-2) 10%, var(--color-4) 13%, transparent 13%),
+    linear-gradient(to right, transparent 21%, var(--color-2) 21%, #1a1a1a 25%, transparent 25%),
+    linear-gradient(to right, transparent 58%, var(--color-2) 58%, var(--color-4) 64%, transparent 64%),
+    linear-gradient(to right, transparent 92%, var(--color-2) 92%, var(--color-4) 95%, transparent 95%),
+    linear-gradient(to bottom, var(--color-1) 48%, transparent 48%),
+    linear-gradient(to right, transparent 96%, var(--color-2) 96%, #1a1a1a 99%, transparent 99%),
+    linear-gradient(to bottom, transparent 68.5%, transparent 76%, var(--color-1) 76%, var(--color-1) 77.5%, transparent 77.5%, transparent 86%, var(--color-1) 86%, var(--color-1) 87.5%, transparent 87.5%),
+    linear-gradient(to right, transparent 35%, var(--color-2) 35%, var(--color-4) 41%, transparent 41%),
+    linear-gradient(to bottom, var(--color-1) 68%, transparent 68%),
+    linear-gradient(to right, transparent 78%, var(--color-3) 78%, var(--color-3) 80%, transparent 80%, transparent 82%, var(--color-3) 82%, var(--color-3) 83%, transparent 83%),
+    linear-gradient(to right, transparent 66%, var(--color-2) 66%, var(--color-4) 85%, transparent 85%);
+  background-size: 300px 150px;
+  background-position: center bottom;
+  border-radius: inherit;
+}
+
+.zenfile-pattern::before {
+  content: "";
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  inset: 0;
+  background-color: var(--color-1);
+  background-image: linear-gradient(to top, var(--color-5) 5%, var(--color-1) 6%, var(--color-1) 7%, transparent 7%),
+    linear-gradient(to bottom, var(--color-1) 30%, transparent 30%),
+    linear-gradient(to right, var(--color-6), var(--color-7) 5%, transparent 5%),
+    linear-gradient(to right, transparent 6%, var(--color-8) 6%, var(--color-9) 9%, transparent 9%),
+    linear-gradient(to right, transparent 27%, #556b2f 27%, #39481f 34%, transparent 34%),
+    linear-gradient(to right, transparent 51%, #fa8072 51%, #f85441 57%, transparent 57%),
+    linear-gradient(to bottom, var(--color-1) 35%, transparent 35%),
+    linear-gradient(to right, transparent 42%, #008080 42%, #004d4d 44%, transparent 44%),
+    linear-gradient(to right, transparent 45%, #008080 45%, #004d4d 47%, transparent 47%),
+    linear-gradient(to right, transparent 48%, #008080 48%, #004d4d 50%, transparent 50%),
+    linear-gradient(to right, transparent 87%, #789 87%, #4f5d6a 91%, transparent 91%),
+    linear-gradient(to bottom, var(--color-1) 37.5%, transparent 37.5%),
+    linear-gradient(to right, transparent 14%, #bdb76b 14%, #989244 20%, transparent 20%),
+    linear-gradient(to bottom, var(--color-1) 40%, transparent 40%),
+    linear-gradient(to right, transparent 10%, #808000 10%, #4d4d00 13%, transparent 13%),
+    linear-gradient(to right, transparent 21%, #8b4513 21%, #5e2f0d 25%, transparent 25%),
+    linear-gradient(to right, transparent 58%, #8b4513 58%, #5e2f0d 64%, transparent 64%),
+    linear-gradient(to right, transparent 92%, #2f4f4f 92%, #1c2f2f 95%, transparent 95%),
+    linear-gradient(to bottom, var(--color-1) 48%, transparent 48%),
+    linear-gradient(to right, transparent 96%, #2f4f4f 96%, #1c2f2f 99%, transparent 99%),
+    linear-gradient(to bottom, transparent 68.5%, transparent 76%, var(--color-1) 76%, var(--color-1) 77.5%, transparent 77.5%, transparent 86%, var(--color-1) 86%, var(--color-1) 87.5%, transparent 87.5%),
+    linear-gradient(to right, transparent 35%, #cd5c5c 35%, #bc3a3a 41%, transparent 41%),
+    linear-gradient(to bottom, var(--color-1) 68%, transparent 68%),
+    linear-gradient(to right, transparent 78%, #bc8f8f 78%, #bc8f8f 80%, transparent 80%, transparent 82%, #bc8f8f 82%, #bc8f8f 83%, transparent 83%),
+    linear-gradient(to right, transparent 66%, #a52a2a 66%, #7c2020 85%, transparent 85%);
+  background-size: 300px 150px;
+  background-position: center bottom;
+  clip-path: circle(150px at center center);
+  animation: zenfile-flashlight 20s ease infinite;
+  border-radius: inherit;
+}
+
+.zenfile-pattern::after {
+  content: "";
+  width: 25px;
+  height: 10px;
+  position: absolute;
+  left: calc(50% + 59px);
+  bottom: 100px;
+  background-repeat: no-repeat;
+  background-image: radial-gradient(circle, #fff 50%, transparent 50%),
+    radial-gradient(circle, #fff 50%, transparent 50%);
+  background-size: 10px 10px;
+  background-position: left center, right center;
+  animation: zenfile-eyes 20s infinite;
+}
+
+@keyframes zenfile-flashlight {
+  0% { clip-path: circle(150px at -25% 10%); }
+  38% { clip-path: circle(150px at 60% 20%); }
+  39% { opacity: 1; clip-path: circle(150px at 60% 86%); }
+  40% { opacity: 0; clip-path: circle(150px at 60% 86%); }
+  41% { opacity: 1; clip-path: circle(150px at 60% 86%); }
+  42% { opacity: 0; clip-path: circle(150px at 60% 86%); }
+  54% { opacity: 0; clip-path: circle(150px at 60% 86%); }
+  55% { opacity: 1; clip-path: circle(150px at 60% 86%); }
+  59% { opacity: 1; clip-path: circle(150px at 60% 86%); }
+  64% { clip-path: circle(150px at 45% 78%); }
+  68% { clip-path: circle(150px at 85% 89%); }
+  72% { clip-path: circle(150px at 60% 86%); }
+  74% { clip-path: circle(150px at 60% 86%); }
+  100% { clip-path: circle(150px at 150% 50%); }
+}
+
+@keyframes zenfile-eyes {
+  0%, 38% { opacity: 0; }
+  39%, 41% { opacity: 1; transform: scaleY(1); }
+  40% { transform: scaleY(0); filter: none; background-image: radial-gradient(circle, #fff 50%, transparent 50%), radial-gradient(circle, #fff 50%, transparent 50%); }
+  41% { transform: scaleY(1); background-image: radial-gradient(circle, #ff0000 50%, transparent 50%), radial-gradient(circle, #ff0000 50%, transparent 50%); filter: drop-shadow(0 0 4px #ff8686); }
+  42%, 100% { opacity: 0; }
+}
+
+@keyframes loop-slide {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-100vw); }
+}
+
+/* News Ticker / Feed Bar - Fox News Style with Vertical Slide */
+.news-ticker-bar {
+  display: flex;
+  align-items: stretch;
+  height: 44px;
+  background: linear-gradient(to bottom right, #f1f5f9 0%, #f8fafc 50%, #f1f5f9 100%);
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(203, 213, 225, 0.5);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.news-ticker-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  background: linear-gradient(135deg, #c41e3a 0%, #8b0000 100%);
+  flex-shrink: 0;
+  position: relative;
+  color: white;
+}
+
+.news-ticker-icon::after {
+  content: '';
+  position: absolute;
+  right: -8px;
+  top: 0;
+  bottom: 0;
+  width: 16px;
+  background: linear-gradient(135deg, #c41e3a 0%, #8b0000 100%);
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+}
+
+.news-ticker-vertical-track {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  padding-left: 20px;
+  padding-right: 12px;
+  position: relative;
+  height: 100%;
+}
+
+.news-ticker-vertical-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  height: 100%;
+  text-decoration: none;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.news-ticker-vertical-item:hover {
+  opacity: 0.8;
+}
+
+.news-ticker-vertical-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.news-ticker-vertical-title {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  color: hsl(var(--foreground));
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.news-ticker-vertical-separator {
+  color: hsl(var(--muted-foreground) / 0.5);
+  font-weight: 300;
+  flex-shrink: 0;
+}
+
+.news-ticker-vertical-summary {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 400;
+  font-size: 12px;
+  color: hsl(var(--muted-foreground));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.news-ticker-source-inline {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  font-size: 11px;
+  color: hsl(var(--primary));
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-left: 6px;
+}
+
+.news-ticker-slide-in {
+  animation: news-slide-in 0.3s ease-out forwards;
+}
+
+.news-ticker-slide-out {
+  animation: news-slide-out 0.3s ease-in forwards;
+}
+
+@keyframes news-slide-in {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes news-slide-out {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+}
+
+.dark .news-ticker-bar {
+  background: linear-gradient(to bottom right, #0a0a0c 0%, #0d1117 50%, #0a0a0c 100%);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Currency Rate Bar */
+.currency-rate-bar {
+  display: flex;
+  align-items: stretch;
+  height: 44px;
+  background: linear-gradient(to bottom right, #f1f5f9 0%, #f8fafc 50%, #f1f5f9 100%);
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(203, 213, 225, 0.5);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+.currency-rate-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  flex-shrink: 0;
+  position: relative;
+  color: white;
+}
+
+.currency-rate-icon::after {
+  content: '';
+  position: absolute;
+  right: -8px;
+  top: 0;
+  bottom: 0;
+  width: 16px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
+}
+
+.currency-rate-track {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  position: relative;
+  padding: 0 16px 0 20px;
+}
+
+.currency-rate-slide {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  width: 100%;
+  gap: 12px;
+}
+
+.currency-rate-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.currency-rate-label {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 500;
+  font-size: 10px;
+  color: hsl(var(--muted-foreground));
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.currency-rate-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+
+.currency-rate-change {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.currency-rate-change.positive {
+  color: #10b981;
+}
+
+.currency-rate-change.negative {
+  color: #ef4444;
+}
+
+.currency-rate-divider {
+  width: 1px;
+  height: 20px;
+  background: hsl(var(--border) / 0.5);
+}
+
+.dark .currency-rate-bar {
+  background: linear-gradient(to bottom right, #0a0a0c 0%, #0d1117 50%, #0a0a0c 100%);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.currency-slide-in {
+  animation: currency-slide-in 0.3s ease-out forwards;
+}
+
+.currency-slide-out {
+  animation: currency-slide-out 0.3s ease-in forwards;
+}
+
+@keyframes currency-slide-in {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes currency-slide-out {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+}
+
+/* Weather Landscape Card */
+.weather-landscape-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  overflow: hidden;
+  background-color: white;
+}
+
+.weather-landscape-card .landscape-section {
+  position: relative;
+  width: 100%;
+  height: 65%;
+  overflow: hidden;
+}
+
+.weather-landscape-card .landscape-section * {
+  position: absolute;
+}
+
+.weather-landscape-card .sky {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(0deg, rgba(247, 225, 87, 1) 0%, rgba(233, 101, 148, 1) 100%);
+}
+
+.weather-landscape-card .sun {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 35px;
+  height: 35px;
+  border-radius: 50%;
+  background-color: white;
+  bottom: 45%;
+  left: 20%;
+  filter: drop-shadow(0px 0px 10px white);
+}
+
+.weather-landscape-card .sun::after {
+  position: absolute;
+  content: "";
+  width: 118%;
+  height: 118%;
+  border-radius: 50%;
+  background-color: white;
+  opacity: 0.5;
+}
+
+.weather-landscape-card .sun::before {
+  position: absolute;
+  content: "";
+  width: 134%;
+  height: 134%;
+  border-radius: 50%;
+  background-color: white;
+  opacity: 0.1;
+}
+
+.weather-landscape-card .ocean {
+  overflow: hidden;
+  bottom: 0;
+  width: 100%;
+  height: 28%;
+  background: linear-gradient(0deg, rgba(241, 192, 125, 1) 0%, rgba(247, 218, 150, 1) 100%);
+}
+
+.weather-landscape-card .reflection {
+  position: absolute;
+  background-color: white;
+  opacity: 0.5;
+  z-index: 1;
+}
+
+.weather-landscape-card .reflection:nth-child(1) {
+  width: 40px;
+  height: 10px;
+  clip-path: polygon(0% 0%, 100% 0%, 50% 20%);
+  top: 5%;
+  left: 32%;
+}
+
+.weather-landscape-card .reflection:nth-child(2) {
+  width: 80px;
+  height: 15px;
+  clip-path: polygon(0% 0%, 100% 0%, 60% 20%, 40% 20%);
+  top: 15%;
+  left: 39%;
+}
+
+.weather-landscape-card .reflection:nth-child(3) {
+  width: 60px;
+  height: 2px;
+  clip-path: polygon(0% 50%, 40% 0%, 60% 0%, 100% 50%, 60% 100%, 40% 100%);
+  top: 27%;
+  right: 15%;
+}
+
+.weather-landscape-card .reflection:nth-child(4) {
+  width: 70px;
+  height: 2px;
+  clip-path: polygon(0% 50%, 40% 0%, 60% 0%, 100% 50%, 60% 100%, 40% 100%);
+  top: 37%;
+  right: 28%;
+}
+
+.weather-landscape-card .reflection:nth-child(5) {
+  width: 70px;
+  height: 3px;
+  clip-path: polygon(0% 50%, 40% 0%, 60% 0%, 100% 50%, 60% 100%, 40% 100%);
+  top: 46%;
+  right: 8%;
+}
+
+.weather-landscape-card .hill-1 {
+  right: -25%;
+  bottom: 20%;
+  width: 150px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #e6b29d;
+}
+
+.weather-landscape-card .shadow-hill-1 {
+  right: -25%;
+  top: -30%;
+  width: 150px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: #f1c7a0;
+  opacity: 1;
+}
+
+.weather-landscape-card .hill-2 {
+  right: -36%;
+  bottom: 10%;
+  width: 150px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #c29182;
+}
+
+.weather-landscape-card .shadow-hill-2 {
+  right: -36%;
+  top: -65%;
+  width: 150px;
+  height: 80px;
+  border-radius: 50%;
+  background-color: #e5bb96;
+  opacity: 1;
+}
+
+.weather-landscape-card .hill-3 {
+  left: -100%;
+  bottom: -28%;
+  width: 350px;
+  height: 150px;
+  border-radius: 50%;
+  background-color: #b77873;
+  z-index: 3;
+}
+
+.weather-landscape-card .tree-1 {
+  bottom: 20%;
+  left: 3%;
+  width: 40px;
+  height: 55px;
+  z-index: 3;
+}
+
+.weather-landscape-card .tree-2 {
+  bottom: 14%;
+  left: 22%;
+  width: 40px;
+  height: 55px;
+  z-index: 3;
+}
+
+.weather-landscape-card .hill-4 {
+  right: -100%;
+  bottom: -40%;
+  width: 350px;
+  height: 150px;
+  border-radius: 50%;
+  background-color: #a16773;
+  z-index: 3;
+}
+
+.weather-landscape-card .tree-3 {
+  bottom: 10%;
+  right: 1%;
+  width: 50px;
+  height: 65px;
+  z-index: 3;
+}
+
+.weather-landscape-card .landscape-filter {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(0deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0) 40%);
+  z-index: 5;
+  opacity: 0.2;
+}
+
+.weather-landscape-card .weather-content-section {
+  width: 100%;
+  height: 35%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: hsl(var(--card));
+}
+
+.weather-landscape-card .weather-info-overlay {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: absolute;
+  text-align: center;
+  top: 0;
+  right: 0%;
+  width: 100%;
+  padding: 12px 16px;
+  color: white;
+  z-index: 10;
+}
+
+.weather-landscape-card .weather-left-side {
+  font-size: 10pt;
+  font-weight: 600;
+  align-self: flex-start;
+}
+
+.weather-landscape-card .weather-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.weather-landscape-card .weather-icon svg {
+  width: 32px;
+  height: 32px;
+}
+
+.weather-landscape-card .weather-right-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.weather-landscape-card .weather-right-side .weather-date {
+  font-size: 9pt;
+  margin: 0;
+  padding: 0;
+  opacity: 0.9;
+}
+
+.weather-landscape-card .weather-location span {
+  font-size: 10pt;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.weather-landscape-card .weather-location {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+}
+
+.weather-landscape-card .weather-location svg {
+  width: 12px;
+  height: auto;
+}
+
+.weather-landscape-card .weather-temperature {
+  font-size: 18pt;
+  font-weight: 700;
+  line-height: 26px;
+}
+
+.weather-landscape-card .weather-forecast {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-evenly;
+  height: 100%;
+  width: 100%;
+  padding: 8px 16px;
+}
+
+.weather-landscape-card .weather-forecast > div {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: hsl(var(--muted-foreground));
+  font-size: 8pt;
+}
+
+.weather-landscape-card .weather-separator {
+  width: 100%;
+  height: 1px;
+  background-color: hsl(var(--border));
+  border-radius: 1px;
+}
+
+.dark .weather-landscape-card .weather-content-section {
+  background: hsl(var(--card));
+}
+
+.dark .weather-landscape-card .weather-forecast > div {
+  color: hsl(var(--muted-foreground));
+}
+
+.dark .weather-landscape-card .weather-separator {
+  background-color: hsl(var(--border));
+}
+
+/* Rainy Weather Theme */
+.weather-landscape-card.rainy .sky {
+  background: linear-gradient(0deg, rgba(100, 120, 140, 1) 0%, rgba(60, 70, 85, 1) 100%);
+}
+
+.weather-landscape-card.rainy .sun {
+  display: none;
+}
+
+.weather-landscape-card.rainy .clouds {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+}
+
+.weather-landscape-card.rainy .cloud {
+  position: absolute;
+  background: rgba(80, 90, 100, 0.9);
+  border-radius: 50%;
+  filter: blur(8px);
+}
+
+.weather-landscape-card.rainy .cloud-1 {
+  width: 120px;
+  height: 40px;
+  top: 8%;
+  left: 10%;
+  animation: cloud-float 8s ease-in-out infinite;
+}
+
+.weather-landscape-card.rainy .cloud-2 {
+  width: 100px;
+  height: 35px;
+  top: 15%;
+  right: 15%;
+  animation: cloud-float 10s ease-in-out infinite reverse;
+}
+
+.weather-landscape-card.rainy .cloud-3 {
+  width: 80px;
+  height: 30px;
+  top: 5%;
+  left: 50%;
+  animation: cloud-float 12s ease-in-out infinite;
+}
+
+@keyframes cloud-float {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(10px); }
+}
+
+.weather-landscape-card.rainy .ocean {
+  background: linear-gradient(0deg, rgba(100, 130, 150, 1) 0%, rgba(130, 160, 180, 1) 100%);
+}
+
+.weather-landscape-card.rainy .reflection {
+  opacity: 0.2;
+}
+
+.weather-landscape-card.rainy .hill-1 {
+  background-color: #7a8b8c;
+}
+
+.weather-landscape-card.rainy .hill-2 {
+  background-color: #5a6b6c;
+}
+
+.weather-landscape-card.rainy .hill-3 {
+  background-color: #4a5a5c;
+}
+
+.weather-landscape-card.rainy .hill-4 {
+  background-color: #3a4a4c;
+}
+
+.weather-landscape-card.rainy .shadow-hill-1 {
+  background-color: #8a9a9c;
+}
+
+.weather-landscape-card.rainy .shadow-hill-2 {
+  background-color: #7a8a8c;
+}
+
+.weather-landscape-card.rainy .tree-1 svg,
+.weather-landscape-card.rainy .tree-2 svg {
+  fill: #4a5a5c;
+  stroke: #4a5a5c;
+}
+
+.weather-landscape-card.rainy .tree-1 svg path,
+.weather-landscape-card.rainy .tree-2 svg path {
+  fill: #4a5a5c;
+}
+
+.weather-landscape-card.rainy .tree-3 svg {
+  fill: #3a4a4c;
+  stroke: #3a4a4c;
+}
+
+.weather-landscape-card.rainy .tree-3 svg path {
+  fill: #3a4a4c;
+}
+
+/* Rain drops */
+.weather-landscape-card.rainy .rain-container {
+  position: absolute;
+  width: 100%;
+  height: 70%;
+  overflow: hidden;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.weather-landscape-card.rainy .rain-drop {
+  position: absolute;
+  width: 2px;
+  height: 15px;
+  background: linear-gradient(to bottom, transparent, rgba(200, 220, 255, 0.35));
+  animation: rain-fall linear infinite;
+}
+
+.weather-landscape-card.rainy .rain-drop:nth-child(1) { left: 10%; animation-duration: 1.2s; animation-delay: 0s; }
+.weather-landscape-card.rainy .rain-drop:nth-child(2) { left: 30%; animation-duration: 1.4s; animation-delay: 0.3s; }
+.weather-landscape-card.rainy .rain-drop:nth-child(3) { left: 50%; animation-duration: 1.1s; animation-delay: 0.6s; }
+.weather-landscape-card.rainy .rain-drop:nth-child(4) { left: 70%; animation-duration: 1.3s; animation-delay: 0.2s; }
+.weather-landscape-card.rainy .rain-drop:nth-child(5) { left: 90%; animation-duration: 1.5s; animation-delay: 0.5s; }
+
+@keyframes rain-fall {
+  0% { transform: translateY(-20px); opacity: 0; }
+  10% { opacity: 0.5; }
+  90% { opacity: 0.5; }
+  100% { transform: translateY(200px); opacity: 0; }
+}
+
+.weather-landscape-card.rainy .landscape-filter {
+  background: linear-gradient(0deg, rgba(100, 120, 140, 0.3) 0%, rgba(60, 70, 85, 0) 40%);
+}
+
+/* ============================================================
+   Liquid Glass Navbar — tema adaptif cam katmanları
+   Açık: Framer "Liquid Glass Navbar" orijinal metalik gümüş
+   Koyu: aynı fizik modeliyle koyu dumanlı cam (smoked glass)
+   ============================================================ */
+.lg-bar {
+  --lg-shell: linear-gradient(180deg, rgb(255,255,255) 0%, rgb(201,201,201) 9%, rgb(161,161,161) 32%, rgb(117,117,117) 73%, rgb(255,255,255) 100%);
+  --lg-body: linear-gradient(150deg, rgb(208,208,208) 0%, rgb(232,232,232) 50.17%, rgb(200,200,200) 100%);
+  --lg-drop: 0 1px 3px 0 rgba(0, 0, 0, 0.015), 0 4px 12px -1px rgba(0, 0, 0, 0.025), 0 12px 24px -2px rgba(0, 0, 0, 0.03), 0 22px 44px -6px rgba(0, 0, 0, 0.02);
+  --lg-inset: inset 0px 1px 1.5px 0px rgba(0,0,0,0.07), inset 0px -1px 1.5px 0px rgba(0,0,0,0.07);
+  --lg-pill-bg: rgba(255,255,255,0.4);
+  --lg-pill-shadow: inset 0px 1px 0px 0px rgba(255,255,255,0.85), 0px 4px 10px -3px rgba(148,160,181,0.22), -2px -2px 6px 0px rgba(255,255,255,0.25);
+  --lg-text: rgb(10,10,12);
+  --lg-text-muted: rgba(20,20,25,0.55);
+}
+
+.dark .lg-bar {
+  --lg-shell: linear-gradient(180deg, rgba(255,255,255,0.32) 0%, rgba(255,255,255,0.10) 9%, rgba(255,255,255,0.045) 32%, rgba(255,255,255,0.02) 73%, rgba(255,255,255,0.16) 100%);
+  --lg-body: linear-gradient(150deg, rgb(30,32,38) 0%, rgb(46,49,57) 50.17%, rgb(26,28,33) 100%);
+  --lg-drop: 0 2px 5px 0 rgba(0, 0, 0, 0.12), 0 6px 16px -2px rgba(0, 0, 0, 0.16), 0 16px 32px -4px rgba(0, 0, 0, 0.18), 0 28px 56px -8px rgba(0, 0, 0, 0.12);
+  --lg-inset: inset 0px 1px 1.5px 0px rgba(255,255,255,0.10), inset 0px -1px 1.5px 0px rgba(0,0,0,0.45);
+  --lg-pill-bg: rgba(255,255,255,0.14);
+  --lg-pill-shadow: inset 0px 1px 0px 0px rgba(255,255,255,0.22), 0px 4px 10px -3px rgba(0,0,0,0.25), -2px -2px 6px 0px rgba(255,255,255,0.03);
+  --lg-text: rgb(245,245,247);
+  --lg-text-muted: rgba(235,235,245,0.55);
+}
+
+.lg-bar .lg-shell { background: var(--lg-shell); box-shadow: var(--lg-drop); }
+.lg-bar .lg-body { background: var(--lg-body); box-shadow: var(--lg-inset); }
+.lg-bar .lg-pill { background: var(--lg-pill-bg); box-shadow: var(--lg-pill-shadow); }
+.lg-bar .lg-text { color: var(--lg-text); }
+.lg-bar .lg-text-muted { color: var(--lg-text-muted); }
+.lg-bar .lg-text-muted:hover { color: var(--lg-text); }
+
+/* ============================================================
+   LIQUID GLASS WINDOW — iOS 26 / macOS Tahoe material
+   Frosted backdrop + rim refraction + pointer specular + grain
+   ============================================================ */
+
+.liquid-window {
+  --liquid-radius: 20px;
+  --liquid-blur: 34px;
+  --liquid-ambient: #2997ff;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: var(--liquid-radius);
+  /* NOTE: never set isolation/opacity/filter here — that creates a backdrop
+     root, which stops the children's backdrop-filter from sampling the page. */
+  box-shadow:
+    0 1px 1px rgba(0, 0, 0, 0.3),
+    0 4px 12px -2px rgba(0, 0, 0, 0.4),
+    0 20px 48px -12px rgba(0, 0, 0, 0.7),
+    0 56px 120px -28px rgba(0, 0, 0, 0.85);
+  transition: box-shadow 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.liquid-frost,
+.liquid-tint,
+.liquid-grain,
+.liquid-refraction {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* Flat solid body — a single colour edge to edge, no top-down gradient and
+   no backdrop sampling, so nothing behind the panel tints the surface. */
+.liquid-frost {
+  z-index: 0;
+  background: #16171b;
+}
+
+/* Edge lensing layer kept for the material API; neutral on a solid body. */
+.liquid-refraction {
+  z-index: 1;
+  opacity: 0.9;
+}
+
+/* Tint: intentionally empty — the window body is one flat colour. */
+.liquid-tint {
+  z-index: 2;
+}
+
+/* Microscopic material grain — stops the blur feeling like flat CSS. */
+.liquid-grain {
+  z-index: 5;
+  opacity: 0.055;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.86' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+}
+
+/* ---------- macOS window chrome ---------- */
+
+.liquid-titlebar {
+  height: 30px;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  position: relative;
+  user-select: none;
+}
+
+.liquid-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  color: rgba(235, 235, 245, 0.52);
+  background: transparent;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.liquid-close:hover {
+  color: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.liquid-close svg {
+  width: 12px;
+  height: 12px;
+}
+
+.liquid-icon-tile {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.11),
+    0 5px 14px -6px rgba(0, 0, 0, 0.6);
+}
+
+/* ---------- Segmented control ---------- */
+
+.liquid-segment {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 2px;
+  padding: 3px;
+  border-radius: 12px;
+  background: #101115;
+}
+
+.liquid-segment-thumb {
+  border-radius: 9px;
+  background: #2e3138;
+}
+
+/* ---------- Grouped inset content ---------- */
+
+.liquid-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 7px,
+    #000 calc(100% - 9px),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 7px,
+    #000 calc(100% - 9px),
+    transparent 100%
+  );
+}
+
+.liquid-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+.liquid-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.17);
+  border-radius: 99px;
+}
+.liquid-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+@keyframes inspector-shimmer {
+  from { background-position: -200% 0; }
+  to { background-position: 200% 0; }
+}
+
+.inspector-bone {
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.06) 25%,
+    rgba(255, 255, 255, 0.12) 50%,
+    rgba(255, 255, 255, 0.06) 75%
+  );
+  background-size: 200% 100%;
+  animation: inspector-shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes inspector-reveal {
+  from {
+    -webkit-mask-image: linear-gradient(90deg, #000 -100%, transparent 0%);
+    mask-image: linear-gradient(90deg, #000 -100%, transparent 0%);
+  }
+  to {
+    -webkit-mask-image: linear-gradient(90deg, #000 100%, transparent 200%);
+    mask-image: linear-gradient(90deg, #000 100%, transparent 200%);
+  }
+}
+
+.inspector-reveal {
+  animation: inspector-reveal 0.6s ease-in-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .inspector-bone,
+  .inspector-reveal {
+    animation: none;
+  }
+}
+
+.liquid-section-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0 4px;
+  margin-bottom: 7px;
+  font-size: 11.5px;
+  line-height: 1.2;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: rgba(235, 235, 245, 0.56);
+}
+
+.liquid-group {
+  border-radius: 14px;
+  overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.075) 0%, rgba(255, 255, 255, 0.035) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.1),
+    0 1px 2px rgba(0, 0, 0, 0.16);
+}
+
+.liquid-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 42px;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  line-height: 1.4;
+  letter-spacing: 0.005em;
+}
+
+.liquid-row + .liquid-row {
+  border-top: 0.5px solid rgba(255, 255, 255, 0.065);
+}
+
+.liquid-row-label {
+  color: rgba(235, 235, 245, 0.7);
+  flex: 0 0 auto;
+  font-weight: 500;
+  letter-spacing: 0.005em;
+}
+
+.liquid-row-value {
+  color: rgba(255, 255, 255, 0.97);
+  text-align: right;
+  min-width: 0;
+  font-weight: 500;
+  letter-spacing: 0.005em;
+}
+
+.liquid-hairline {
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.09) 16%,
+    rgba(255, 255, 255, 0.09) 84%,
+    rgba(255, 255, 255, 0) 100%
+  );
+}
+
+/* ---------- Controls ---------- */
+
+.liquid-input {
+  width: 100%;
+  height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  outline: none;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.005em;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.24);
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.28),
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.1),
+    0 1px 0 rgba(255, 255, 255, 0.035);
+  transition: box-shadow 0.16s ease, background 0.16s ease;
+}
+
+.liquid-input::placeholder {
+  color: rgba(235, 235, 245, 0.45);
+  font-weight: 400;
+}
+
+.liquid-input:focus {
+  background: rgba(0, 0, 0, 0.3);
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(41, 151, 255, 0.76),
+    0 0 0 4px rgba(0, 113, 227, 0.16);
+}
+
+.liquid-input-inline {
+  height: 26px;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  text-align: right;
+  font-size: 13.5px;
+  font-weight: 500;
+  letter-spacing: 0.005em;
+  color: rgba(255, 255, 255, 0.97);
+}
+
+.liquid-input-inline:focus {
+  background: transparent;
+  box-shadow: none;
+}
+
+.liquid-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 34px;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0) 55%),
+    #0b3d84;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.26);
+  transition: filter 0.16s ease, transform 0.12s ease, opacity 0.16s ease;
+}
+
+.liquid-primary:hover {
+  filter: brightness(1.1);
+}
+.liquid-primary:active {
+  transform: scale(0.985);
+  filter: brightness(0.96);
+}
+.liquid-primary:disabled {
+  opacity: 0.4;
+}
+
+.liquid-tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 29px;
+  padding: 0 9px;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.005em;
+  color: rgba(235, 235, 245, 0.74);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.085) 0%, rgba(255, 255, 255, 0.035) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.11),
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.085);
+  transition: background 0.16s ease, color 0.16s ease, transform 0.12s ease;
+}
+
+/* Plain text actions — no button chrome. */
+.liquid-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.005em;
+  color: rgba(235, 235, 245, 0.62);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.liquid-link:hover {
+  color: rgba(255, 255, 255, 0.94);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.liquid-link-danger {
+  color: rgba(255, 99, 90, 0.72);
+}
+
+.liquid-link-danger:hover {
+  color: rgba(255, 99, 90, 0.98);
+}
+
+.liquid-tool:hover {
+  color: #fff;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.06) 100%);
+}
+
+.liquid-tool:active {
+  transform: scale(0.96);
+}
+
+.liquid-tool-danger {
+  color: rgba(255, 99, 90, 0.86);
+  background:
+    linear-gradient(180deg, rgba(255, 69, 58, 0.13) 0%, rgba(255, 69, 58, 0.06) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.07),
+    inset 0 0 0 0.5px rgba(255, 69, 58, 0.2);
+}
+
+.liquid-tool-danger:hover {
+  color: #ff786f;
+  background:
+    linear-gradient(180deg, rgba(255, 69, 58, 0.2) 0%, rgba(255, 69, 58, 0.1) 100%);
+}
+
+.liquid-chip {
+  height: 24px;
+  padding: 0 9px;
+  border-radius: 7px;
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.005em;
+  color: rgba(235, 235, 245, 0.72);
+  background: rgba(255, 255, 255, 0.05);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.065);
+  transition: background 0.15s ease, color 0.15s ease, transform 0.12s ease;
+}
+
+.liquid-chip:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.09);
+}
+.liquid-chip:active {
+  transform: scale(0.96);
+}
+
+.liquid-chip-active {
+  color: #b9d1f2;
+  background: rgba(11, 61, 132, 0.58);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 0 0 0.5px rgba(130, 170, 225, 0.32);
+}
+
+.liquid-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #30d158;
+  box-shadow:
+    0 0 0 3px rgba(48, 209, 88, 0.12),
+    0 0 9px rgba(48, 209, 88, 0.52);
+}
+
+.liquid-inset {
+  background: rgba(0, 0, 0, 0.26);
+  border-radius: 9px;
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.4),
+    inset 0 0 0 0.5px rgba(255, 255, 255, 0.06),
+    0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+/* Focus rings stay inside the material language. */
+.liquid-window button:focus-visible,
+.liquid-window input:focus-visible,
+.liquid-window select:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px rgba(10, 14, 22, 0.9),
+    0 0 0 3.5px rgba(41, 151, 255, 0.82);
+}
+
+/* If the browser cannot sample the backdrop, keep the panel readable. */
+@supports not (backdrop-filter: blur(1px)) {
+  .liquid-frost {
+    background: #16171b;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .liquid-frost {
+    background: #16171b;
+  }
+  .liquid-refraction {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .liquid-window,
+  .liquid-tool,
+  .liquid-primary,
+  .liquid-chip {
+    transition: none !important;
+  }
+}
