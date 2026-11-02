@@ -22,7 +22,6 @@ import {
   Scale,
   Gavel,
   GripVertical,
-  RefreshCw,
 } from "lucide-react";
 import { motion, useMotionValue, useTransform, animate } from "motion/react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -41,6 +40,7 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { Spin1 } from "@/components/spin1";
 import { AppTile } from "@/components/ui/app-tile";
 import { BentoCard } from "@/components/ui/bento-card";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -256,6 +256,10 @@ function SortableAppTile({ id, children }: SortableAppTileProps) {
   );
 }
 
+const PULL_MAX = 52;
+const PULL_TRIGGER = 34;
+const PULL_SPRING = { type: "spring" as const, stiffness: 420, damping: 34, mass: 0.7 };
+
 export default function Dashboard() {
   const [, setLocation] = useLocation();
   const { data: stats, isLoading: statsLoading } = useDashboardStats();
@@ -265,16 +269,14 @@ export default function Dashboard() {
   const { data: documents } = useDocuments();
   const queryClient = useQueryClient();
 
-  // Pull-to-refresh state
+  // Pull-to-refresh state. Travel is capped so a long drag cannot keep tilting the page.
   const [isRefreshing, setIsRefreshing] = useState(false);
   const pullY = useMotionValue(0);
 
-  const rotateX = useTransform(pullY, [0, 150], [0, 12]);
-  const scale = useTransform(pullY, [0, 150], [1, 0.95]);
-  const opacity = useTransform(pullY, [0, 150], [1, 0.9]);
-  const loaderY = useTransform(pullY, [0, 150], [-50, 40]);
-  const loaderOpacity = useTransform(pullY, [0, 100], [0, 1]);
-  const loaderRotate = useTransform(pullY, [0, 150], [0, 360]);
+  const rotateX = useTransform(pullY, [0, PULL_MAX], [0, 3.5]);
+  const scale = useTransform(pullY, [0, PULL_MAX], [1, 0.988]);
+  const loaderY = useTransform(pullY, [0, PULL_MAX], [-16, 12]);
+  const loaderOpacity = useTransform(pullY, [0, 16, PULL_MAX], [0, 1, 1]);
 
   useEffect(() => {
     const container = document.getElementById('dashboard-scroll-viewport');
@@ -297,7 +299,7 @@ export default function Dashboard() {
 
       if (deltaY > 0 && container.scrollTop <= 0) {
         if (e.cancelable) e.preventDefault();
-        pullY.set(deltaY * 0.4);
+        pullY.set(Math.min(PULL_MAX, deltaY * 0.28));
       } else {
         isPulling = false;
       }
@@ -305,39 +307,39 @@ export default function Dashboard() {
 
     const triggerRefresh = async () => {
       setIsRefreshing(true);
-      animate(pullY, 80, { type: "spring", stiffness: 300, damping: 30 });
+      animate(pullY, PULL_MAX, PULL_SPRING);
       
       await queryClient.invalidateQueries();
       await new Promise(r => setTimeout(r, 1200)); // artificial delay to show off animation
       
       setIsRefreshing(false);
-      animate(pullY, 0, { type: "spring", stiffness: 300, damping: 30 });
+      animate(pullY, 0, PULL_SPRING);
     };
 
     const onTouchEnd = () => {
       if (!isPulling) return;
       isPulling = false;
       
-      if (pullY.get() > 80 && !isRefreshing) {
+      if (pullY.get() >= PULL_TRIGGER && !isRefreshing) {
         triggerRefresh();
       } else {
-        animate(pullY, 0, { type: "spring", stiffness: 300, damping: 30 });
+        animate(pullY, 0, PULL_SPRING);
       }
     };
 
     const onWheel = (e: WheelEvent) => {
       if (container.scrollTop <= 0 && e.deltaY < 0 && !isRefreshing) {
-        const newY = pullY.get() - (e.deltaY * 0.4);
+        const newY = Math.min(PULL_MAX, pullY.get() - e.deltaY * 0.18);
         if (newY > 0) {
           if (e.cancelable) e.preventDefault();
           pullY.set(newY);
           
           clearTimeout((window as any).wheelTimeout);
           (window as any).wheelTimeout = setTimeout(() => {
-            if (pullY.get() > 80) {
+            if (pullY.get() >= PULL_TRIGGER) {
               triggerRefresh();
             } else {
-              animate(pullY, 0, { type: "spring", stiffness: 300, damping: 30 });
+              animate(pullY, 0, PULL_SPRING);
             }
           }, 150);
         }
@@ -445,37 +447,26 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="w-full h-full relative" style={{ perspective: "1000px" }}>
+    <div className="w-full h-full relative" style={{ perspective: "1400px" }}>
       <motion.div
-        className="absolute top-0 left-0 w-full flex justify-center z-50 pointer-events-none"
+        className="absolute left-7 top-3 z-50 pointer-events-none"
         style={{ y: loaderY, opacity: loaderOpacity }}
       >
-        <div className="bg-background/80 backdrop-blur-md border border-white/10 shadow-2xl rounded-full p-3 flex items-center justify-center">
-          <motion.div
-            animate={isRefreshing ? { rotate: 360 } : {}}
-            transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-            style={!isRefreshing ? { rotate: loaderRotate } : {}}
-          >
-            <RefreshCw className="w-6 h-6 text-primary" />
-          </motion.div>
-        </div>
+        <Spin1 />
       </motion.div>
 
       <motion.div
         style={{
           rotateX,
           scale,
-          opacity,
           y: pullY,
           transformOrigin: "top center",
           height: "100%",
           width: "100%",
-          willChange: "transform, opacity",
+          willChange: "transform",
           backgroundColor: "var(--background)",
-          borderRadius: pullY.get() > 0 ? "16px" : "0px",
           overflow: "hidden"
         }}
-        transition={{ type: "spring", stiffness: 300, damping: 30 }}
       >
         <ScrollArea viewportProps={{ id: 'dashboard-scroll-viewport' }} className="h-full">
           <div className="p-6 space-y-6 max-w-7xl mx-auto">

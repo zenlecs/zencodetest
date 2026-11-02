@@ -3,82 +3,104 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Local Google Sans — variable first (opsz/wght), static faces as weight-accurate fallbacks */
+/* Local faces. Paths are relative to this file so Vite emits them next to the CSS and file:// can load them. */
 @font-face {
   font-family: 'Google Sans';
-  src: url('/fonts/Google%20Sans/GoogleSans-VariableFont_GRAD,opsz,wght.ttf') format('truetype');
+  src: url("../public/fonts/Google Sans/GoogleSans-VariableFont_GRAD,opsz,wght.ttf") format('truetype');
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: 'Google Sans';
-  src: url('/fonts/Google%20Sans/GoogleSans-Italic-VariableFont_GRAD,opsz,wght.ttf') format('truetype');
+  src: url("../public/fonts/Google Sans/GoogleSans-Italic-VariableFont_GRAD,opsz,wght.ttf") format('truetype');
   font-weight: 100 900;
   font-style: italic;
   font-display: swap;
 }
 @font-face {
   font-family: 'Google Sans';
-  src: url('/fonts/Google%20Sans/GoogleSans-Regular.ttf') format('truetype');
+  src: url("../public/fonts/Google Sans/GoogleSans-Regular.ttf") format('truetype');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: 'Google Sans';
-  src: url('/fonts/Google%20Sans/GoogleSans-Italic.ttf') format('truetype');
+  src: url("../public/fonts/Google Sans/GoogleSans-Italic.ttf") format('truetype');
   font-weight: 400;
   font-style: italic;
   font-display: swap;
 }
 @font-face {
   font-family: 'Google Sans';
-  src: url('/fonts/Google%20Sans/GoogleSans-Medium.ttf') format('truetype');
+  src: url("../public/fonts/Google Sans/GoogleSans-Medium.ttf") format('truetype');
   font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: 'Google Sans';
-  src: url('/fonts/Google%20Sans/GoogleSans-MediumItalic.ttf') format('truetype');
+  src: url("../public/fonts/Google Sans/GoogleSans-MediumItalic.ttf") format('truetype');
   font-weight: 500;
   font-style: italic;
   font-display: swap;
 }
 @font-face {
   font-family: 'Google Sans';
-  src: url('/fonts/Google%20Sans/GoogleSans-SemiBold.ttf') format('truetype');
+  src: url("../public/fonts/Google Sans/GoogleSans-SemiBold.ttf") format('truetype');
   font-weight: 600;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: 'Google Sans';
-  src: url('/fonts/Google%20Sans/GoogleSans-SemiBoldItalic.ttf') format('truetype');
+  src: url("../public/fonts/Google Sans/GoogleSans-SemiBoldItalic.ttf") format('truetype');
   font-weight: 600;
   font-style: italic;
   font-display: swap;
 }
 @font-face {
   font-family: 'Google Sans';
-  src: url('/fonts/Google%20Sans/GoogleSans-Bold.ttf') format('truetype');
+  src: url("../public/fonts/Google Sans/GoogleSans-Bold.ttf") format('truetype');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: 'Google Sans';
-  src: url('/fonts/Google%20Sans/GoogleSans-BoldItalic.ttf') format('truetype');
+  src: url("../public/fonts/Google Sans/GoogleSans-BoldItalic.ttf") format('truetype');
   font-weight: 700;
   font-style: italic;
   font-display: swap;
 }
 @font-face {
   font-family: 'Kanit Local';
-  src: url('/fonts/Kanit/Kanit-Light.ttf') format('truetype');
+  src: url("../public/fonts/Kanit/Kanit-Light.ttf") format('truetype');
   font-weight: 300;
   font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Kanit Local';
+  src: url("../public/fonts/Kanit/Kanit-Regular.ttf") format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Kanit Local';
+  src: url("../public/fonts/Kanit/Kanit-Medium.ttf") format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Kanit Local';
+  src: url("../public/fonts/Kanit/Kanit-SemiBold.ttf") format('truetype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
 }
 
 .font-google-sans {
@@ -114,7 +136,7 @@
 /* Local Plus Jakarta Sans (bundled TTF) */
 @font-face {
   font-family: 'Plus Jakarta Sans';
-  src: url('/fonts/Plus%20Jakarta/PlusJakartaSans-Medium.ttf') format('truetype');
+  src: url("../public/fonts/Plus Jakarta/PlusJakartaSans-Medium.ttf") format('truetype');
   font-weight: 500;
   font-style: normal;
 }

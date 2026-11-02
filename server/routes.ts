@@ -44,7 +44,8 @@ import {
 } from "./services/studio-automation";
 import { zeniumEngine } from "./services/zenium-browser";
 import { signalCoordinator } from "./services/signal-protocol";
-import { zenlecsAI, resolveAIModel, resolveRotationModel, describeAIError } from "./services/zenlecs-ai";
+import { zenlecsAI, resolveAIModel, resolveRotationModel, describeAIError, VOICE_AI_MODEL } from "./services/zenlecs-ai";
+import { createAgentSignedUrl } from "./services/elevenlabs-agent";
 import { log } from "./index";
 import { setupWebSocket } from "./websocket";
 import { db } from "./db";
@@ -1842,6 +1843,18 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/voice/session", authenticate, async (_req, res) => {
+    try {
+      const signedUrl = await createAgentSignedUrl();
+      res.json({ signedUrl });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Ses oturumu açılamadı.";
+      console.error("Voice session error:", message);
+      const status = message.includes("tanımlı değil") ? 503 : 502;
+      res.status(status).json({ error: message });
+    }
+  });
+
   // Stream endpoint for real-time text generation (SSE)
   app.post("/api/ai/chat/stream", authenticate, async (req, res) => {
     // Sohbet turu durum takibi (hata durumunda geri alma için)
@@ -1864,7 +1877,8 @@ export async function registerRoutes(
 
     try {
       await zenlecsAI.ensureTablesExist();
-      const { conversationId, content, model } = req.body ?? {};
+      const { conversationId, content, model, channel } = req.body ?? {};
+      const voiceTurn = channel === "voice";
 
       const trimmedContent = typeof content === "string" ? content.trim() : "";
       if (!trimmedContent) {
@@ -1910,9 +1924,9 @@ export async function registerRoutes(
         content: m.content,
       }));
 
-      // 3. Groq dönüşümü: her iki promptta bir sıradaki modelle devam et
+      // Yazılı sohbet iki promptta bir model değiştirir. Ses turu tek modelde kalır.
       const promptCount = history.filter((m) => m.role === "user").length;
-      const rotationModel = resolveRotationModel(promptCount);
+      const rotationModel = voiceTurn ? VOICE_AI_MODEL : resolveRotationModel(promptCount);
 
       // Setup Server-Sent Events (SSE)
       res.setHeader("Content-Type", "text/event-stream");
@@ -1930,7 +1944,7 @@ export async function registerRoutes(
           contentEmitted = true;
           writeEvent({ type: "chunk", chunk });
         },
-        { signal: generationAbort.signal }
+        { signal: generationAbort.signal, channel: voiceTurn ? "voice" : "text" }
       );
 
       if (!fullResponse || !fullResponse.trim()) {

@@ -1,10 +1,13 @@
+import { execFile } from "child_process";
 import { createHash } from "crypto";
 import { createWriteStream } from "fs";
 import fs from "fs/promises";
 import path from "path";
 import { finished } from "stream/promises";
-import extractZip from "extract-zip";
+import { promisify } from "util";
 import { app } from "electron";
+
+const execFileAsync = promisify(execFile);
 
 export const TEST_RELEASE_BASE = "https://github.com/zenlecs/zencodetest/releases/download/test";
 
@@ -145,6 +148,38 @@ async function downloadZip(dest: string, expectedSha: string, onProgress: (loade
   }
 }
 
+function tarBinary() {
+  return process.platform === "win32"
+    ? path.join(process.env.SystemRoot || "C:\\Windows", "System32", "tar.exe")
+    : "tar";
+}
+
+function zipEntryTarget(root: string, name: string) {
+  const stripped = name.replace(/\\/g, "/").replace(/^\.\//, "").replace(/\/+$/, "");
+  if (!stripped || stripped === ".") return null;
+  if (stripped.startsWith("/") || /^[A-Za-z]:/.test(stripped)) {
+    throw new Error("The archive path is invalid.");
+  }
+  const parts = stripped.split("/");
+  if (parts.some((part) => !part || part === "." || part === "..")) {
+    throw new Error("The archive path is invalid.");
+  }
+  const target = path.resolve(root, ...parts);
+  if (target !== root && !target.startsWith(root + path.sep)) {
+    throw new Error("The archive path is invalid.");
+  }
+  return target;
+}
+
+async function extractAppZip(zipPath: string, stagingRoot: string) {
+  const tar = tarBinary();
+  const listed = await execFileAsync(tar, ["-tf", zipPath], { windowsHide: true, encoding: "utf8", maxBuffer: 32 * 1024 * 1024 });
+  for (const line of listed.stdout.split(/\r?\n/)) {
+    if (line) zipEntryTarget(stagingRoot, line);
+  }
+  await execFileAsync(tar, ["-xf", zipPath, "-C", stagingRoot], { windowsHide: true });
+}
+
 let installing = false;
 
 export async function payloadInstall(send: (update: PayloadProgress) => void): Promise<PayloadProgress> {
@@ -208,15 +243,7 @@ export async function payloadInstall(send: (update: PayloadProgress) => void): P
     await fs.rm(staging, { recursive: true, force: true });
     await fs.mkdir(staging, { recursive: true });
     const stagingRoot = path.resolve(staging);
-    await extractZip(zipPath, {
-      dir: stagingRoot,
-      onEntry(entry) {
-        const target = path.resolve(stagingRoot, entry.fileName);
-        if (target !== stagingRoot && !target.startsWith(stagingRoot + path.sep)) {
-          throw new Error("The archive path is invalid.");
-        }
-      },
-    });
+    await extractAppZip(zipPath, stagingRoot);
     await fs.access(path.join(staging, "index.html"));
 
     const finalDir = path.join(root, manifest.gitSha);

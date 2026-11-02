@@ -120,8 +120,19 @@ export function buildBridgeHeaders(
   headers["Authorization"] = `Bearer ${token}`;
   headers["Origin"] = "zenos-electron";
   if (cookieHeader) headers["cookie"] = cookieHeader;
+  mirrorCsrfHeader(headers);
 
   return headers;
+}
+
+function mirrorCsrfHeader(headers: Record<string, string>) {
+  const hasHeader = Object.keys(headers).some((key) => key.toLowerCase() === "x-csrf-token");
+  if (hasHeader) return;
+  const cookie = Object.entries(headers).find(([key]) => key.toLowerCase() === "cookie")?.[1];
+  if (!cookie) return;
+  const pair = cookie.split(";").map((part) => part.trim()).find((part) => part.toLowerCase().startsWith("zenos_csrf="));
+  if (!pair) return;
+  headers["x-csrf-token"] = decodeURIComponent(pair.slice("zenos_csrf=".length));
 }
 
 /**

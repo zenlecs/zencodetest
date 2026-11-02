@@ -27,7 +27,9 @@ contextBridge.exposeInMainWorld(
         'init-hidden-windows',
         'theme-sync',
         'payload-status',
-        'payload-install'
+        'payload-install',
+        'voice-session-start',
+        'voice-session-stop'
       ];
       if (validChannels.includes(channel)) {
         ipcRenderer.send(channel, data);

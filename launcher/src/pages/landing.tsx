@@ -404,7 +404,7 @@ export default function LandingPage({ onLoginClick }: { onLoginClick?: () => voi
             >
               <div className="w-full max-w-7xl mx-auto flex items-center justify-between gap-12">
                 <VideoAmbient
-                  src="/videoplayback.mp4"
+                  src={`${import.meta.env.BASE_URL}videoplayback.mp4`}
                   className="aspect-[9/16] h-[64vh] max-h-[620px] min-h-[380px]"
                   rounded={28}
                   glow={true}

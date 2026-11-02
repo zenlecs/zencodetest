@@ -98,6 +98,8 @@ export interface ChatComposerProps {
   conversations?: ChatConversationOption[];
   activeConversationId?: number | null;
   onSelectConversation?: (id: number) => void;
+  onToggleVoice?: () => void;
+  voiceActive?: boolean;
 }
 
 export function RoundIconButton({

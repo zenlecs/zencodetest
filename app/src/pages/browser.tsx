@@ -248,13 +248,13 @@ export default function BrowserPage() {
             className="w-80 max-w-full mx-auto mb-6 flex items-center justify-center relative"
           >
             <img 
-              src="/ZeniumDark.svg" 
+              src={`${import.meta.env.BASE_URL}ZeniumDark.svg`}
               alt="Zenium Logo" 
               className="hidden dark:block w-full h-auto drop-shadow-[0_0_30px_rgba(var(--primary),0.2)]" 
               style={{ WebkitMaskImage: 'linear-gradient(to top, transparent 0%, black 80%)', maskImage: 'linear-gradient(to top, transparent 0%, black 80%)' }}
             />
             <img 
-              src="/ZeniumLight.svg" 
+              src={`${import.meta.env.BASE_URL}ZeniumLight.svg`}
               alt="Zenium Logo" 
               className="block dark:hidden w-full h-auto drop-shadow-[0_0_30px_rgba(var(--primary),0.2)]" 
               style={{ WebkitMaskImage: 'linear-gradient(to top, transparent 0%, black 80%)', maskImage: 'linear-gradient(to top, transparent 0%, black 80%)' }}

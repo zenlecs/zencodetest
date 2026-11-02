@@ -1,4 +1,4 @@
-import { ChevronDown, RectangleVertical } from "lucide-react";
+import { ChevronDown, Mic, RectangleVertical } from "lucide-react";
 import React from "react";
 import {
   AttachmentRow,
@@ -51,6 +51,14 @@ export function ChatComposer({ onOpenPanel, onMinimize, bare = false, ...props }
           {onMinimize && (
             <RoundIconButton title="Simge durumuna küçült" onClick={onMinimize}>
               <ChevronDown className="h-4 w-4" />
+            </RoundIconButton>
+          )}
+          {props.onToggleVoice && (
+            <RoundIconButton
+              title={props.voiceActive ? "Sesli konuşmayı kapat" : "Sesli konuş"}
+              onClick={props.onToggleVoice}
+            >
+              <Mic className={`h-4 w-4 ${props.voiceActive ? "text-[#0066cc] dark:text-[#2997ff]" : ""}`} />
             </RoundIconButton>
           )}
           <ComposerActions core={core} />

@@ -1,5 +1,7 @@
 import { protocol } from 'electron';
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, powerSaveBlocker, session, type WebContents } from 'electron';
+
+app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -45,6 +47,23 @@ const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 
 let mainWindow: BrowserWindow | null = null;
 let launcherWindow: BrowserWindow | null = null;
+let voiceBlockerId: number | null = null;
+
+function isAppWindow(contents: WebContents | null): boolean {
+  return !!contents && !!mainWindow && !mainWindow.isDestroyed() && contents.id === mainWindow.webContents.id;
+}
+
+function startVoiceBlocker() {
+  if (voiceBlockerId !== null && powerSaveBlocker.isStarted(voiceBlockerId)) return;
+  voiceBlockerId = powerSaveBlocker.start('prevent-app-suspension');
+}
+
+function stopVoiceBlocker() {
+  if (voiceBlockerId !== null && powerSaveBlocker.isStarted(voiceBlockerId)) {
+    powerSaveBlocker.stop(voiceBlockerId);
+  }
+  voiceBlockerId = null;
+}
 
 /** Shared session cookie jar — both launcher and app windows use the same loopback session */
 const sessionCookies: Record<string, string> = {};
@@ -102,13 +121,13 @@ function getAppIconPath() {
 }
 
 function loadRenderer(win: BrowserWindow, product: 'launcher' | 'app', hashRoute: string, installedIndex?: string | null) {
-  if (product === 'app' && installedIndex) {
-    win.loadFile(installedIndex, { hash: hashRoute });
-    return;
-  }
   if (isDev) {
     const port = product === 'launcher' ? 5173 : 5174;
     win.loadURL(`http://127.0.0.1:${port}/#${hashRoute}`);
+    return;
+  }
+  if (product === 'app' && installedIndex) {
+    win.loadFile(installedIndex, { hash: hashRoute });
     return;
   }
   win.loadFile(path.join(__dirname, '../dist', product, 'index.html'), { hash: hashRoute });
@@ -201,6 +220,7 @@ function createMainWindow() {
   });
 
   mainWindow.on('closed', () => {
+    stopVoiceBlocker();
     mainWindow = null;
     // App closed without explicit logout IPC — return to launcher auth surface
     clearSessionCookies();
@@ -305,6 +325,29 @@ app.on('web-contents-created', (_, contents) => {
 });
 
 app.whenReady().then(() => {
+  const appSession = session.defaultSession;
+  // Medya isteği yoksa Electron bunu sormadan reddeder. Ses ve mevcut aramalar
+  // yalnızca uygulama penceresinde açılır; başlatıcı ve gömülü sayfalar açamaz.
+  appSession.setPermissionCheckHandler((contents, permission) => {
+    if (permission === 'media') return isAppWindow(contents);
+    return permission === 'fullscreen'
+      || permission === 'clipboard-sanitized-write'
+      || permission === 'notifications'
+      || permission === 'pointerLock';
+  });
+  appSession.setPermissionRequestHandler((contents, permission, callback) => {
+    if (permission === 'media') {
+      callback(isAppWindow(contents));
+      return;
+    }
+    callback(
+      permission === 'fullscreen' ||
+      permission === 'clipboard-sanitized-write' ||
+      permission === 'notifications' ||
+      permission === 'pointerLock'
+    );
+  });
+
   // Custom secure protocol for internal assets in Electron
   protocol.handle('zenos-asset', async (request) => {
     try {
@@ -340,9 +383,14 @@ app.whenReady().then(() => {
 });
 
 app.on('window-all-closed', () => {
+  stopVoiceBlocker();
   if (process.platform !== 'darwin') {
     app.quit();
   }
+});
+
+app.on('before-quit', () => {
+  stopVoiceBlocker();
 });
 
 // Window controls IPC
@@ -385,6 +433,18 @@ ipcMain.on('window-close', () => {
 });
 
 // Theme sync
+ipcMain.on('voice-session-start', (event) => {
+  if (!isAppWindow(event.sender)) return;
+  event.sender.setBackgroundThrottling(false);
+  startVoiceBlocker();
+});
+
+ipcMain.on('voice-session-stop', (event) => {
+  if (!isAppWindow(event.sender)) return;
+  event.sender.setBackgroundThrottling(true);
+  stopVoiceBlocker();
+});
+
 ipcMain.on('theme-sync', (event, theme) => {
   BrowserWindow.getAllWindows().forEach((win) => {
     // Broadcast to all windows except the sender
@@ -457,6 +517,32 @@ import crypto from 'crypto';
 import { registerSandboxApiIpc } from './api-bridge';
 const LOOPBACK_SECRET = crypto.randomBytes(32).toString('hex');
 
+function loadTestEnv() {
+  const candidates = [
+    path.join(process.resourcesPath, ".env"),
+    path.join(app.getAppPath(), ".env"),
+    path.join(process.cwd(), ".env"),
+  ];
+  for (const file of candidates) {
+    if (!fs.existsSync(file)) continue;
+    for (const line of fs.readFileSync(file, "utf8").split(/\r?\n/)) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#")) continue;
+      const eq = trimmed.indexOf("=");
+      if (eq <= 0) continue;
+      const key = trimmed.slice(0, eq).trim();
+      let value = trimmed.slice(eq + 1).trim();
+      if (
+        (value.startsWith('"') && value.endsWith('"')) ||
+        (value.startsWith("'") && value.endsWith("'"))
+      ) {
+        value = value.slice(1, -1);
+      }
+      if (process.env[key] === undefined) process.env[key] = value;
+    }
+  }
+}
+
 async function ensureLocalServer(): Promise<number> {
   if (serverReady && localServerPort) return localServerPort;
 
@@ -468,6 +554,8 @@ async function ensureLocalServer(): Promise<number> {
       ? path.join(app.getAppPath(), 'migrations')
       : path.join(__dirname, '../migrations');
   }
+
+  loadTestEnv();
 
   // Inject the loopback secret into the server process so it can validate
   process.env.ZENOS_LOOPBACK_SECRET = LOOPBACK_SECRET;

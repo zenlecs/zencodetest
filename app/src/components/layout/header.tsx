@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { motion, AnimatePresence, animate } from "motion/react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
+import { subscribeVoiceSpeaking } from "@/lib/voice-speaking";
 
 
 const isElectron = !!window.electron;
@@ -57,8 +58,11 @@ export function Header() {
   const { user, logout } = useAuth();
   const [isSearchHovered, setIsSearchHovered] = useState(false);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [assistantSpeaking, setAssistantSpeaking] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const isSearchExpanded = isSearchHovered || isSearchFocused;
+  const isSearchExpanded = isSearchHovered || isSearchFocused || assistantSpeaking;
+
+  useEffect(() => subscribeVoiceSpeaking(setAssistantSpeaking), []);
   const { toast } = useToast();
 
   
@@ -193,16 +197,18 @@ export function Header() {
 
   useEffect(() => {
     if (unreadCount > prevUnreadCountRef.current) {
-      setShowFireEffect(true);
-      const timer = setTimeout(() => {
-        setShowFireEffect(false);
-      }, 2000);
       prevUnreadCountRef.current = unreadCount;
-      return () => clearTimeout(timer);
+      setShowFireEffect(true);
     } else if (unreadCount < prevUnreadCountRef.current) {
       prevUnreadCountRef.current = unreadCount;
     }
   }, [unreadCount]);
+
+  useEffect(() => {
+    if (!showFireEffect) return;
+    const timer = window.setTimeout(() => setShowFireEffect(false), 3000);
+    return () => window.clearTimeout(timer);
+  }, [showFireEffect]);
   useEffect(() => {
     let controls: any;
     if (showFireEffect) {
@@ -273,17 +279,29 @@ export function Header() {
           }}
           data-testid="search-container"
         >
-          <div className="absolute top-[-8px] left-1/2 -translate-x-1/2 pointer-events-none translate-x-[-230px] opacity-80" style={{ zIndex: -1 }}>
+          <div className="pointer-events-none absolute left-1/2 top-[-8px] h-0 w-0" style={{ zIndex: -1 }}>
+            <div
+              className="absolute top-0 transition-[transform,filter,opacity] duration-700 ease-out"
+              style={{
+                width: 500,
+                marginLeft: -250,
+                transform: assistantSpeaking ? "scaleX(4)" : "scaleX(1)",
+                transformOrigin: "center top",
+                filter: assistantSpeaking ? "brightness(1.16)" : "brightness(1)",
+                opacity: assistantSpeaking ? 1 : 0.8,
+              }}
+            >
             <AnimatePresence>
               {isSearchExpanded && (
                 <>
                   {/* Top Base (Linear, Vivid Core) */}
+                  <div className="absolute left-1/2 top-0 -translate-x-1/2">
                   <motion.div
                     key="fire-core"
                     initial={{ opacity: 0, scaleY: 0 }}
                     animate={{ opacity: 1, scaleY: 1, transition: { duration: 0.4, ease: "easeOut" } }}
                     exit={{ opacity: 0, scaleY: 0, transition: { duration: 0.3 } }}
-                    className="absolute top-0 left-1/2 -translate-x-1/2 origin-top flex justify-center"
+                    className="origin-top"
                   >
                     <motion.div
                       animate={{ scaleX: [1, 1.08, 0.92, 1], scaleY: [1, 0.9, 1.1, 1], x: [0, 5, -5, 0] }}
@@ -293,14 +311,16 @@ export function Header() {
                       <div className="w-full h-full bg-blue-600/50 dark:bg-blue-600/60" style={{ clipPath: "polygon(0 0, 100% 0, 50% 100%)" }} />
                     </motion.div>
                   </motion.div>
+                  </div>
 
                   {/* Mid Flame (Tapering) */}
+                  <div className="absolute left-1/2 top-0 -translate-x-1/2">
                   <motion.div
                     key="fire-mid"
                     initial={{ opacity: 0, scaleY: 0 }}
                     animate={{ opacity: 1, scaleY: 1, transition: { duration: 0.5, delay: 0.1, ease: "easeOut" } }}
                     exit={{ opacity: 0, scaleY: 0, transition: { duration: 0.4 } }}
-                    className="absolute top-0 left-1/2 -translate-x-1/2 origin-top flex justify-center"
+                    className="origin-top"
                   >
                     <motion.div
                       animate={{ scaleX: [1, 1.1, 0.9, 1], scaleY: [1, 1.05, 0.95, 1], x: [0, -10, 10, -5, 0] }}
@@ -310,14 +330,16 @@ export function Header() {
                       <div className="w-full h-full bg-gradient-to-b from-blue-600/40 to-sky-400/20 dark:from-blue-600/50 dark:to-sky-400/30" style={{ clipPath: "polygon(0 0, 100% 0, 50% 100%)" }} />
                     </motion.div>
                   </motion.div>
+                  </div>
 
                   {/* Bottom Tip (Faded and Narrow) */}
+                  <div className="absolute left-1/2 top-0 -translate-x-1/2">
                   <motion.div
                     key="fire-tip"
                     initial={{ opacity: 0, scaleY: 0 }}
                     animate={{ opacity: 1, scaleY: 1, transition: { duration: 0.6, delay: 0.2, ease: "easeOut" } }}
                     exit={{ opacity: 0, scaleY: 0, transition: { duration: 0.5 } }}
-                    className="absolute top-0 left-1/2 -translate-x-1/2 origin-top flex justify-center"
+                    className="origin-top"
                   >
                     <motion.div
                       animate={{ scaleX: [1, 1.15, 0.85, 1], scaleY: [1, 1.1, 0.9, 1], x: [0, 15, -15, 10, 0] }}
@@ -327,9 +349,11 @@ export function Header() {
                       <div className="w-full h-full bg-gradient-to-b from-sky-400/20 to-cyan-200/10 dark:from-sky-400/30 dark:to-cyan-200/20" style={{ clipPath: "polygon(0 0, 100% 0, 50% 100%)" }} />
                     </motion.div>
                   </motion.div>
+                  </div>
                 </>
               )}
             </AnimatePresence>
+            </div>
           </div>
           <button
             type="button"
@@ -427,7 +451,7 @@ export function Header() {
                           x: [0, 15, -10, 20, -5, 12, -15, 0],
                           opacity: [0.7, 1, 0.5, 0.9, 0.6, 1, 0.7, 0.7]
                         }}
-                        transition={{ repeat: Infinity, duration: 3.5, ease: "easeInOut" }}
+                        transition={{ repeat: 0, duration: 3, ease: "easeInOut" }}
                         className="w-[270px] h-[45px] blur-[25px]"
                       >
                         <div className="w-full h-full bg-red-600/70 dark:bg-red-600/80" style={{ clipPath: "polygon(0 0, 100% 0, 50% 100%)" }} />
@@ -450,7 +474,7 @@ export function Header() {
                           y: [0, -6, 8, -4, 6, -5, 4, 0],
                           opacity: [0.6, 0.95, 0.4, 1, 0.5, 0.9, 0.5, 0.6]
                         }}
-                        transition={{ repeat: Infinity, duration: 4.5, ease: "easeInOut" }}
+                        transition={{ repeat: 0, duration: 3, ease: "easeInOut" }}
                         className="w-[180px] h-[85px] blur-[35px]"
                       >
                         <div className="w-full h-full bg-gradient-to-b from-red-600/60 to-orange-500/40 dark:from-red-600/70 dark:to-orange-500/50" style={{ clipPath: "polygon(0 0, 100% 0, 50% 100%)" }} />
@@ -473,7 +497,7 @@ export function Header() {
                           y: [0, 10, -8, 6, -10, 8, -6, 0],
                           opacity: [0.5, 0.85, 0.3, 0.95, 0.4, 0.8, 0.35, 0.5]
                         }}
-                        transition={{ repeat: Infinity, duration: 5.5, ease: "easeInOut" }}
+                        transition={{ repeat: 0, duration: 3, ease: "easeInOut" }}
                         className="w-[120px] h-[120px] blur-[45px]"
                       >
                         <div className="w-full h-full bg-gradient-to-b from-orange-500/40 to-amber-400/30 dark:from-orange-500/50 dark:to-amber-400/40" style={{ clipPath: "polygon(0 0, 100% 0, 50% 100%)" }} />

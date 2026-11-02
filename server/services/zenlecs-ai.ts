@@ -30,6 +30,28 @@ export const DEFAULT_AI_MODEL = "openai/gpt-oss-120b";
 export const FALLBACK_AI_MODEL = "openai/gpt-oss-20b";
 export const ALLOWED_AI_MODELS = [...ROTATION_AI_MODELS, FALLBACK_AI_MODEL] as const;
 
+/** Ses turu tek modelde kalır. Yazılı sohbetin iki promptta bir dönüşümü burada yok. */
+export const VOICE_AI_MODEL = DEFAULT_AI_MODEL;
+const VOICE_FIRST_TOKEN_MS = 2500;
+
+export const VOICE_SYSTEM_PROMPT = `Sen Zenlecs OS içindeki Zenlecs+'sın. Kullanıcı seninle sesli, karşılıklı konuşuyor.
+Kurallar:
+1. Konuşulan Türkçe kullan. İki ila dört cümle kur.
+2. Markdown, başlık, madde işareti, kod ve tablo kullanma.
+3. Yapay zeka klişesi ve dolgu cümlesi kullanma.
+4. Doğrudan, vakur ve net ol.
+5. Hukuki konuda genel bilgi ver; kesin hukuki mütalaa iddiasında bulunma.`;
+
+const TEXT_SYSTEM_PROMPT = `Sen Zenlecs OS yazılımının yerleşik ve yetkili yapay zeka asistanı Zenlecs+'sın.
+Türkiye hukuk sistemi (HMK, TBK, TTK, CMK, İİK, Avukatlık Kanunu, TBB Meslek Kuralları) ve kurumsal dosya yönetimi konusunda en üst düzey uzmanlığa sahipsin.
+Ayrıca Zenlecs OS ekosisteminin tüm modüllerine (Studio Universal Legal Canvas, E-Wallet, Sunumlar, İletişim, Muhasebe ve Zenium Browser) ve ileride kazanılacak agentic çalışma yeteneklerine tam hakimsin.
+
+Üslup ve Tasarım İlkeleri:
+1. Asla yapay zeka klişesi ("Harika bir soru!", "Size yardımcı olmaktan mutluluk duyarım!", vb.) veya gereksiz dolgu cümleleri KULLANMA.
+2. Doğrudan, vakur, yetkin, berrak ve net bir hukuk ve iş diliyle yaz.
+3. Apple editoryal tasarım ilkelerine uy: Metni gereksiz kutular, süsler olmadan; net başlıklar (###), anlaşılır paragraflar ve temiz maddeler halinde çıplak ve okunabilir formatta sun.
+4. Karmaşık görevlerde adımları mantıksal sırayla netleştirerek agentic bir plan sun.`;
+
 /**
  * Dönüşüm kuralı: her iki promptta bir sıradaki modele geç.
  * @param promptCount bugüne dek alınan kullanıcı promptu sayısı (bu tur dahil)
@@ -149,11 +171,28 @@ class ZenlecsAIService {
     ];
   }
 
+  public async transcribeSpeech(audio: Buffer): Promise<string> {
+    if (!this.groqClient) this.initGroqClient();
+    if (!this.groqClient) {
+      throw new Error("Yapay zeka servisi kimlik doğrulaması başarısız. API anahtarını denetleyin.");
+    }
+    if (audio.length < 800) return "";
+
+    const file = new File([new Uint8Array(audio)], "speech.wav", { type: "audio/wav" });
+    const result = await this.groqClient.audio.transcriptions.create({
+      file,
+      model: "whisper-large-v3-turbo",
+      language: "tr",
+      response_format: "json",
+    });
+    return (result.text || "").trim();
+  }
+
   public async streamChatResponse(
     model: string,
     history: ChatMessageInput[],
     onChunk: (chunk: string) => void,
-    options?: { signal?: AbortSignal }
+    options?: { signal?: AbortSignal; channel?: "text" | "voice" }
   ): Promise<string> {
     await this.ensureTablesExist();
     if (!this.groqClient) {
@@ -163,24 +202,15 @@ class ZenlecsAIService {
       throw new Error("Yapay zeka servisi kimlik doğrulaması başarısız. API anahtarını denetleyin.");
     }
 
-    const selectedModel = resolveAIModel(model);
+    const voice = options?.channel === "voice";
+    const selectedModel = voice ? VOICE_AI_MODEL : resolveAIModel(model);
     const signal = options?.signal;
 
-    const systemPrompt: ChatMessageInput = {
-      role: "system",
-      content: `Sen Zenlecs OS yazılımının yerleşik ve yetkili yapay zeka asistanı Zenlecs+'sın.
-Türkiye hukuk sistemi (HMK, TBK, TTK, CMK, İİK, Avukatlık Kanunu, TBB Meslek Kuralları) ve kurumsal dosya yönetimi konusunda en üst düzey uzmanlığa sahipsin.
-Ayrıca Zenlecs OS ekosisteminin tüm modüllerine (Studio Universal Legal Canvas, E-Wallet, Sunumlar, İletişim, Muhasebe ve Zenium Browser) ve ileride kazanılacak agentic çalışma yeteneklerine tam hakimsin.
-
-Üslup ve Tasarım İlkeleri:
-1. Asla yapay zeka klişesi ("Harika bir soru!", "Size yardımcı olmaktan mutluluk duyarım!", vb.) veya gereksiz dolgu cümleleri KULLANMA.
-2. Doğrudan, vakur, yetkin, berrak ve net bir hukuk ve iş diliyle yaz.
-3. Apple editoryal tasarım ilkelerine uy: Metni gereksiz kutular, süsler olmadan; net başlıklar (###), anlaşılır paragraflar ve temiz maddeler halinde çıplak ve okunabilir formatta sun.
-4. Karmaşık görevlerde adımları mantıksal sırayla netleştirerek agentic bir plan sun.`,
-    };
-
     const messagesToSend = [
-      systemPrompt,
+      {
+        role: "system" as const,
+        content: voice ? VOICE_SYSTEM_PROMPT : TEXT_SYSTEM_PROMPT,
+      },
       ...history.map((m) => ({ role: m.role, content: m.content })),
     ];
 
@@ -192,18 +222,18 @@ Ayrıca Zenlecs OS ekosisteminin tüm modüllerine (Studio Universal Legal Canva
     };
 
     /** Tek bir modeli akıtır ve üretilen tam metni döner. */
-    const runStream = async (targetModel: string): Promise<string> => {
-      if (signal?.aborted) throw new Error("İstek iptal edildi.");
+    const runStream = async (targetModel: string, runSignal?: AbortSignal): Promise<string> => {
+      if (runSignal?.aborted) throw new Error("İstek iptal edildi.");
 
       const stream = await this.groqClient!.chat.completions.create(
         {
           model: targetModel,
           messages: messagesToSend as any,
           stream: true,
-          temperature: 0.3,
-          max_tokens: MODEL_MAX_COMPLETION[targetModel] ?? 4096,
+          temperature: voice ? 0.4 : 0.3,
+          max_tokens: voice ? 400 : (MODEL_MAX_COMPLETION[targetModel] ?? 4096),
         },
-        signal ? { signal } : undefined
+        runSignal ? { signal: runSignal } : undefined
       );
 
       let content = "";
@@ -217,22 +247,48 @@ Ayrıca Zenlecs OS ekosisteminin tüm modüllerine (Studio Universal Legal Canva
       return content;
     };
 
-    try {
-      return await runStream(selectedModel);
-    } catch (err: any) {
+    const fallbackOnce = async (err: unknown): Promise<string> => {
       console.error(`Groq streaming error with ${selectedModel}:`, err);
-
-      // Yedek modele yalnızca hiç parça gönderilmediyse düş; aksi hâlde aynı
-      // yanıtı iki kez akıtmış oluruz.
       if (!emittedAny && !signal?.aborted && selectedModel !== FALLBACK_AI_MODEL) {
         try {
-          return await runStream(FALLBACK_AI_MODEL);
+          return await runStream(FALLBACK_AI_MODEL, signal);
         } catch (fallbackErr) {
           console.error("Groq fallback error:", fallbackErr);
         }
       }
-
       throw err;
+    };
+
+    if (!voice) {
+      try {
+        return await runStream(selectedModel, signal);
+      } catch (err) {
+        return fallbackOnce(err);
+      }
+    }
+
+    const slow = new AbortController();
+    const onParentAbort = () => slow.abort();
+    signal?.addEventListener("abort", onParentAbort);
+    let timedOut = false;
+    const timer = setTimeout(() => {
+      if (!emittedAny) {
+        timedOut = true;
+        slow.abort();
+      }
+    }, VOICE_FIRST_TOKEN_MS);
+
+    try {
+      const text = await runStream(VOICE_AI_MODEL, slow.signal);
+      clearTimeout(timer);
+      return text;
+    } catch (err) {
+      clearTimeout(timer);
+      if (signal?.aborted && !timedOut) throw err;
+      return fallbackOnce(err);
+    } finally {
+      clearTimeout(timer);
+      signal?.removeEventListener("abort", onParentAbort);
     }
   }
 }

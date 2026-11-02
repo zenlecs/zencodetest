@@ -95,7 +95,7 @@ export function installElectronFetchPolyfill(options: ElectronFetchOptions = {})
     const headers = { ...(init?.headers as Record<string, string> | undefined) } as Record<string, string>;
 
     if (["POST", "PUT", "DELETE", "PATCH"].includes(method.toUpperCase())) {
-      const csrfToken = readCookie(target, CSRF_COOKIE_NAME);
+      const csrfToken = readCookie(target, CSRF_COOKIE_NAME) ?? internalCookies[CSRF_COOKIE_NAME] ?? null;
       if (csrfToken) headers["x-csrf-token"] = csrfToken;
     }
 
@@ -142,9 +142,8 @@ export function installElectronFetchPolyfill(options: ElectronFetchOptions = {})
         const key = nameValue.slice(0, separator).trim();
         const value = nameValue.slice(separator + 1).trim();
 
-        if (cookieStr.toLowerCase().includes("httponly")) {
-          internalCookies[key] = value;
-        } else {
+        internalCookies[key] = value;
+        if (!cookieStr.toLowerCase().includes("httponly")) {
           target.document.cookie = cookieStr;
         }
       });

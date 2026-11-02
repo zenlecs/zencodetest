@@ -1,4 +1,4 @@
-import { ChevronDown, GripHorizontal, PanelBottom } from "lucide-react";
+import { ChevronDown, GripHorizontal, Mic, PanelBottom } from "lucide-react";
 import React from "react";
 import { cn } from "@/lib/utils";
 import {
@@ -74,6 +74,14 @@ export function VerticalChatComposer({
       </div>
       <AttachmentRow core={core} />
       <div className="relative flex shrink-0 items-center justify-end px-1.5 pb-1">
+        {props.onToggleVoice && (
+          <RoundIconButton
+            title={props.voiceActive ? "Sesli konuşmayı kapat" : "Sesli konuş"}
+            onClick={props.onToggleVoice}
+          >
+            <Mic className={`h-4 w-4 ${props.voiceActive ? "text-[#0066cc] dark:text-[#2997ff]" : ""}`} />
+          </RoundIconButton>
+        )}
         <ComposerActions core={core} />
       </div>
       <div className="flex shrink-0 flex-col gap-0.5 border-t border-black/[0.08] px-1.5 py-1.5 dark:border-white/[0.10]">

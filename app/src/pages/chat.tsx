@@ -9,6 +9,7 @@ import {
   type ComposerSelection,
 } from "@/components/chat/chat-composer";
 import { VerticalChatComposer } from "@/components/chat/vertical-chat-composer";
+import { VoiceSession } from "@/components/chat/voice-session";
 
 interface AIConversation {
   id: number;
@@ -457,6 +458,7 @@ export default function AIChatPage() {
   const [turnPersisted, setTurnPersisted] = useState(false);
   const [presentationTurn, setPresentationTurn] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [voiceOpen, setVoiceOpen] = useState(false);
   const [composerMode, setComposerMode] = useState<ComposerMode>("docked");
   const [panelPos, setPanelPos] = useState<Point>({ x: 24, y: 24 });
   const [panelSize, setPanelSize] = useState({ width: PANEL_MAX_W, height: PANEL_MAX_W * 0.75 });
@@ -476,6 +478,7 @@ export default function AIChatPage() {
   const skipResumeRef = useRef(false);
   const didResumeRef = useRef(false);
   const launchQuerySeenRef = useRef(false);
+  const conversationIdRef = useRef<number | null>(null);
   const pageRef = useRef<HTMLDivElement>(null);
   const panelShellRef = useRef<HTMLDivElement>(null);
   const dockMeasureRef = useRef<HTMLDivElement>(null);
@@ -506,6 +509,10 @@ export default function AIChatPage() {
       didResumeRef.current = true;
     }
   }
+
+  useEffect(() => {
+    conversationIdRef.current = selectedConversationId;
+  }, [selectedConversationId]);
 
   const { data: conversations = [], refetch: refetchConversations } = useQuery<AIConversation[]>({
     queryKey: ["/api/ai/conversations"],
@@ -623,11 +630,21 @@ export default function AIChatPage() {
     setTurnPersisted(false);
   };
 
-  const handleSendMessage = async (textToSend?: string) => {
+  const handleSendMessage = async (
+    textToSend?: string,
+    options?: {
+      channel?: "text" | "voice";
+      signal?: AbortSignal;
+      onChunk?: (chunk: string, full: string) => void;
+    }
+  ) => {
     const content = (textToSend ?? inputMessage).trim();
-    if (!content || isStreaming) return;
+    const voice = options?.channel === "voice";
+    if (!content || (!voice && isStreaming) || options?.signal?.aborted) return;
+    if (voice) abortRef.current?.abort();
 
     const controller = new AbortController();
+    options?.signal?.addEventListener("abort", () => controller.abort(), { once: true });
     abortRef.current = controller;
     const turn = ++turnRef.current;
 
@@ -641,6 +658,7 @@ export default function AIChatPage() {
     setTurnPersisted(false);
     setPresentationTurn((value) => value + 1);
     setLiveAnswer({ text: "", settled: false });
+    let streamed = "";
 
     try {
       const response = await fetch("/api/ai/chat/stream", {
@@ -651,8 +669,9 @@ export default function AIChatPage() {
           "x-zenos-stream": "1",
         },
         body: JSON.stringify({
-          conversationId: selectedConversationId,
+          conversationId: conversationIdRef.current,
           content,
+          channel: voice ? "voice" : undefined,
           model: composerSelection.model,
           style: composerSelection.styleId,
           skills: composerSelection.skillIds,
@@ -668,20 +687,20 @@ export default function AIChatPage() {
       await consumeChatStream(response, async (event) => {
         if (turnRef.current !== turn) return;
         if (event.type === "meta") {
+          conversationIdRef.current = event.conversationId;
           if (event.conversationId !== selectedConversationId) {
             setSelectedConversationId(event.conversationId);
           }
           const usedModel = event.model;
-          if (usedModel) {
+          if (usedModel && !voice) {
             setComposerSelection((prev) =>
               prev.model === usedModel ? prev : { ...prev, model: usedModel }
             );
           }
         } else if (event.type === "chunk") {
-          setLiveAnswer((prev) => ({
-            text: (prev?.text ?? "") + event.chunk,
-            settled: false,
-          }));
+          streamed += event.chunk;
+          options?.onChunk?.(event.chunk, streamed);
+          setLiveAnswer({ text: streamed, settled: false });
         } else if (event.type === "done") {
           setLiveAnswer((prev) => ({
             text: prev?.text ?? "",
@@ -694,7 +713,15 @@ export default function AIChatPage() {
       });
     } catch (err) {
       if (turnRef.current !== turn) return;
-      const aborted = err instanceof DOMException && err.name === "AbortError";
+      const aborted =
+        (err instanceof DOMException && err.name === "AbortError") ||
+        (err instanceof Error && err.name === "AbortError");
+      if (aborted && voice) {
+        setLiveAnswer(null);
+        void refetchMessages();
+        void refetchConversations();
+        return;
+      }
       setLiveAnswer(null);
       setPendingUserQuery(null);
       setRevealHoldDone(false);
@@ -716,7 +743,7 @@ export default function AIChatPage() {
       if (abortRef.current === controller) abortRef.current = null;
       if (turnRef.current === turn) {
         setIsStreaming(false);
-        inputRef.current?.focus();
+        if (!voice) inputRef.current?.focus();
       }
     }
   };
@@ -998,6 +1025,8 @@ export default function AIChatPage() {
     selection: composerSelection,
     onSelectionChange: setComposerSelection,
     onSubmit: () => handleSendMessage(),
+    onToggleVoice: () => setVoiceOpen((open) => !open),
+    voiceActive: voiceOpen,
     disabled: isStreaming || isDeleting,
     inputRef,
     onNewChat: handleStartNewChat,
@@ -1016,6 +1045,7 @@ export default function AIChatPage() {
 
   return (
     <div ref={pageRef} className="relative flex h-full w-full min-w-0 max-w-full flex-col select-text overflow-hidden bg-background">
+      <VoiceSession active={voiceOpen} />
       <div className="relative min-h-0 min-w-0 flex-1">
       <div className="custom-scrollbar h-full min-w-0 overflow-x-hidden overflow-y-auto px-0 pb-4 pt-8">
         <div className={CHAT_STAGE}>
