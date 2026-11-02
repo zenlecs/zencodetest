@@ -166,6 +166,12 @@
       "dist/launcher/**/*",
       "migrations/**/*"
     ],
+    "extraResources": [
+      {
+        "from": ".env",
+        "to": "."
+      }
+    ],
     "win": {
       "target": "nsis"
     },
