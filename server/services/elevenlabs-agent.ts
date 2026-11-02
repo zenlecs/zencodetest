@@ -23,8 +23,28 @@ function httpsGet(url: string, headers: Record<string, string>, redirects = 0): 
         resolve({ status, body: Buffer.concat(chunks).toString("utf8") });
       });
     });
+    request.setTimeout(15000, () => {
+      request.destroy();
+      reject(new Error("Ses servisi yanıt vermedi."));
+    });
     request.on("error", () => reject(new Error("Ses servisine bağlanılamadı.")));
   });
+}
+
+function sessionFailure(status: number, body: string): string {
+  let detail = "";
+  try {
+    const parsed = JSON.parse(body) as { detail?: unknown; message?: unknown };
+    const raw = parsed.detail ?? parsed.message;
+    if (typeof raw === "string") detail = raw;
+    else if (raw && typeof raw === "object" && "message" in raw && typeof raw.message === "string") {
+      detail = raw.message;
+    }
+  } catch {
+    detail = "";
+  }
+  detail = detail.replace(/wss?:\/\/\S+/gi, "").replace(/https?:\/\/\S+/gi, "").replace(/\s+/g, " ").trim().slice(0, 160);
+  return detail ? `Ses oturumu açılamadı (${status}: ${detail}).` : `Ses oturumu açılamadı (${status}).`;
 }
 
 export async function createAgentSignedUrl(): Promise<string> {
@@ -34,20 +54,25 @@ export async function createAgentSignedUrl(): Promise<string> {
   }
   const agentId = process.env.ELEVENLABS_AGENT_ID?.trim() || DEFAULT_AGENT_ID;
   const url = `https://api.elevenlabs.io/v1/convai/conversation/get-signed-url?agent_id=${encodeURIComponent(agentId)}`;
-  const { status, body } = await httpsGet(url, {
-    "xi-api-key": apiKey,
-    Accept: "application/json",
-  });
-  let signedUrl = "";
-  try {
-    const parsed = JSON.parse(body) as { signed_url?: unknown };
-    if (typeof parsed.signed_url === "string") signedUrl = parsed.signed_url;
-  } catch {
-    signedUrl = "";
+  let lastError = "Ses oturumu açılamadı.";
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const { status, body } = await httpsGet(url, {
+      "xi-api-key": apiKey,
+      Accept: "application/json",
+    });
+    let signedUrl = "";
+    try {
+      const parsed = JSON.parse(body) as { signed_url?: unknown };
+      if (typeof parsed.signed_url === "string") signedUrl = parsed.signed_url;
+    } catch {
+      signedUrl = "";
+    }
+    if (status === 401) throw new Error("ElevenLabs anahtarı geçersiz.");
+    if (status === 200 && signedUrl.startsWith("wss://")) return signedUrl;
+    lastError = sessionFailure(status, body);
+    const retryable = status === 429 || status >= 500 || status === 0;
+    if (!retryable || attempt === 2) break;
+    await new Promise((resolve) => setTimeout(resolve, 800 * (attempt + 1)));
   }
-  if (status === 401) throw new Error("ElevenLabs anahtarı geçersiz.");
-  if (status !== 200 || !signedUrl.startsWith("wss://")) {
-    throw new Error("Ses oturumu açılamadı.");
-  }
-  return signedUrl;
+  throw new Error(lastError);
 }

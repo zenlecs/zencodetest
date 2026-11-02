@@ -35,6 +35,8 @@ export function installElectronFetchPolyfill(options: ElectronFetchOptions = {})
   if (!target) return;
 
   target.addEventListener("error", (e: ErrorEvent) => {
+    const text = String(e.message || "");
+    if (text.includes("ResizeObserver loop")) return;
     console.error("[ZenOS Error]", e.error || e.message);
   });
   target.addEventListener("unhandledrejection", (e: PromiseRejectionEvent) => {

@@ -835,17 +835,23 @@ export default function AIChatPage() {
     const page = pageRef.current;
     if (!page) return;
     const sync = () => {
-      setViewport({ width: page.clientWidth, height: page.clientHeight });
+      const width = page.clientWidth;
+      const height = page.clientHeight;
+      setViewport((current) => current.width === width && current.height === height ? current : { width, height });
       const size = fitPanel();
-      panelSizeRef.current = size;
-      setPanelSize(size);
+      if (panelSizeRef.current.width !== size.width || panelSizeRef.current.height !== size.height) {
+        panelSizeRef.current = size;
+        setPanelSize(size);
+      }
       setPanelPos((current) => {
         const next = clampPoint(current.x, current.y, size.width, size.height);
+        if (next.x === current.x && next.y === current.y) return current;
         panelPosRef.current = next;
         return next;
       });
       setIconPos((current) => {
         const next = clampPoint(current.x, current.y, ICON_SIZE, ICON_SIZE);
+        if (next.x === current.x && next.y === current.y) return current;
         iconPosRef.current = next;
         return next;
       });

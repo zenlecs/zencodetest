@@ -2,6 +2,8 @@ import { useEffect } from "react";
 import { Conversation } from "@elevenlabs/client";
 import { setVoiceSpeaking } from "@/lib/voice-speaking";
 
+let sessionLock: Promise<void> = Promise.resolve();
+
 async function openSignedUrl(signal: AbortSignal): Promise<string> {
   const response = await fetch("/api/voice/session", {
     method: "POST",
@@ -27,7 +29,21 @@ export function VoiceSession({ active }: { active: boolean }) {
 
     const run = async () => {
       try {
-        const signedUrl = await openSignedUrl(abort.signal);
+        await sessionLock;
+        if (cancelled) return;
+        let signedUrl = "";
+        let lastError: unknown;
+        for (let attempt = 0; attempt < 3 && !cancelled; attempt += 1) {
+          try {
+            signedUrl = await openSignedUrl(abort.signal);
+            break;
+          } catch (err) {
+            lastError = err;
+            if (cancelled || abort.signal.aborted) return;
+            await new Promise((resolve) => setTimeout(resolve, 800 * (attempt + 1)));
+          }
+        }
+        if (!signedUrl) throw lastError instanceof Error ? lastError : new Error("Ses oturumu açılamadı.");
         if (cancelled) return;
         conversation = await Conversation.startSession({
           signedUrl,
@@ -57,16 +73,17 @@ export function VoiceSession({ active }: { active: boolean }) {
       }
     };
 
-    void run();
+    const finished = run();
 
     return () => {
       cancelled = true;
       abort.abort();
       setVoiceSpeaking(false);
       window.electron?.send("voice-session-stop");
-      const current = conversation;
-      conversation = null;
-      void current?.endSession().catch(() => undefined);
+      sessionLock = finished.then(async () => {
+        await conversation?.endSession().catch(() => undefined);
+        conversation = null;
+      }).then(() => undefined, () => undefined);
     };
   }, [active]);
 
