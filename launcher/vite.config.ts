@@ -9,6 +9,7 @@ export default defineConfig({
       "@": path.resolve(import.meta.dirname, "src"),
     },
   },
+  cacheDir: path.resolve(import.meta.dirname, "../node_modules/.vite/launcher"),
   root: path.resolve(import.meta.dirname),
   build: {
     outDir: path.resolve(import.meta.dirname, "../dist/launcher"),

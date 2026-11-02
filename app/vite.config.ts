@@ -11,6 +11,7 @@ export default defineConfig({
       "@assets": path.resolve(import.meta.dirname, "../attached_assets"),
     },
   },
+  cacheDir: path.resolve(import.meta.dirname, "../node_modules/.vite/app"),
   root: path.resolve(import.meta.dirname),
   build: {
     outDir: path.resolve(import.meta.dirname, "../dist/app"),
