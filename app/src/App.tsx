@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { useHashLocation } from "wouter/use-hash-location";
 import { motion, AnimatePresence } from "motion/react";
@@ -35,14 +35,35 @@ import { GlobalCallOverlay } from "@/components/layout/global-call-overlay";
 const isElectron = !!window.electron;
 const isIslandWindow = window.location.hash.includes("/standalone/island");
 
-function IslandHostBridge() {
+function useIslandOverlay() {
+  const [overlay, setOverlay] = useState(false);
+
+  useEffect(() => {
+    if (!window.electron) return;
+    let alive = true;
+    window.electron.invoke("island-supported")
+      .then((supported) => {
+        if (alive) setOverlay(supported === true);
+      })
+      .catch(() => {
+        if (alive) setOverlay(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  return overlay;
+}
+
+function IslandHostBridge({ overlay }: { overlay: boolean }) {
   const [, setLocation] = useLocation();
   const enabled = useDynamicIsland();
 
   useEffect(() => {
-    if (!isElectron || window.zenosWindowRole === "island") return;
+    if (!overlay || window.zenosWindowRole === "island") return;
     window.electron?.send("island-visibility", readDynamicIsland());
-  }, [enabled]);
+  }, [enabled, overlay]);
 
   useEffect(() => {
     if (!isElectron || window.zenosWindowRole === "island") return;
@@ -92,6 +113,7 @@ function IslandSurface() {
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const [location, navigate] = useLocation();
+  const islandOverlay = useIslandOverlay();
 
   return (
     <div className="relative h-screen w-full bg-background flex flex-col rounded-xl overflow-hidden border border-border/30 shadow-2xl transition-[padding,margin,border-radius,background-color] duration-500 ease-out">
@@ -117,8 +139,8 @@ function AppLayout({ children }: { children: React.ReactNode }) {
           </AnimatePresence>
         </main>
       </div>
-      {!isElectron && <DynamicIsland />}
-      <IslandHostBridge />
+      {(!isElectron || !islandOverlay) && <DynamicIsland />}
+      <IslandHostBridge overlay={islandOverlay} />
       <GlobalCallOverlay />
     </div>
   );

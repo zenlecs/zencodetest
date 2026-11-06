@@ -106,6 +106,7 @@ contextBridge.exposeInMainWorld(
       }
     },
     invoke: async (channel: string, data: any) => {
+      if (channel === 'island-supported') return true;
       let validChannels = ['api-request', 'get-local-server-port', 'payload-status', 'payload-install'];
       if (validChannels.includes(channel)) {
         return await ipcRenderer.invoke(channel, data);
