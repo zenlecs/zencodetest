@@ -48,6 +48,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
+import { LiquidStroke } from "@/components/ui/liquid-stroke";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -243,6 +244,7 @@ function SortableAppTile({ id, children }: SortableAppTileProps) {
 
   return (
     <div ref={setNodeRef} style={style} className="relative group">
+      <LiquidStroke radius={12} />
       {children}
       <div
         {...attributes}
@@ -487,42 +489,7 @@ export default function Dashboard() {
 
         <div className="grid grid-cols-12 gap-4">
           <div className="col-span-12 lg:col-span-8 row-span-2 relative" style={{ minHeight: '280px' }}>
-            {/* Liquid Glass Center Stroke */}
-            <div 
-              className={`absolute inset-[-1px] pointer-events-none rounded-[16px] z-20`}
-              style={{ 
-                padding: '2px',
-                WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-                WebkitMaskComposite: 'xor',
-                mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-                maskComposite: 'exclude',
-              }}
-            >
-              <div 
-                className="absolute inset-0 overflow-hidden rounded-[16px] bg-black/5 dark:bg-white/10 backdrop-blur-xl"
-                style={{
-                  WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 20px, transparent 120px)',
-                  maskImage: 'linear-gradient(to bottom, black 0%, black 20px, transparent 120px)'
-                }}
-              >
-                {/* Fire Edge Glow (Blue from Search) */}
-                <div 
-                  className="absolute inset-0 pointer-events-none mix-blend-screen"
-                  style={{ 
-                    opacity: 'var(--fire-active, 0)',
-                    background: 'radial-gradient(800px 300px at 75% 0px, rgba(37,99,235,0.7) 0%, rgba(56,189,248,0.3) 45%, transparent 80%)' 
-                  }} 
-                />
-                {/* Fire Edge Glow (Red from Notification) */}
-                <div 
-                  className="absolute inset-0 pointer-events-none mix-blend-screen"
-                  style={{ 
-                    opacity: 'var(--fire-active-red, 0)',
-                    background: 'radial-gradient(600px 300px at 135% 0px, rgba(220,38,38,0.7) 0%, rgba(249,115,22,0.3) 45%, transparent 80%)' 
-                  }} 
-                />
-              </div>
-            </div>
+            <LiquidStroke radius={16} />
             <Card 
               className="w-full h-full relative overflow-hidden border-slate-200/50 dark:border-white/5 bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 dark:from-[#0a0a0c] dark:via-[#0d1117] dark:to-[#0a0a0c] shadow-lg z-10"
               data-testid="slider-container"
@@ -566,42 +533,7 @@ export default function Dashboard() {
           </div>
 
           <div className="col-span-12 lg:col-span-4 row-span-2 relative" style={{ minHeight: '280px' }}>
-            {/* Liquid Glass Center Stroke */}
-            <div 
-              className={`absolute inset-[-1px] pointer-events-none rounded-[16px] z-20`}
-              style={{ 
-                padding: '2px',
-                WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-                WebkitMaskComposite: 'xor',
-                mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
-                maskComposite: 'exclude',
-              }}
-            >
-              <div 
-                className="absolute inset-0 overflow-hidden rounded-[16px] bg-black/5 dark:bg-white/10 backdrop-blur-xl"
-                style={{
-                  WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 20px, transparent 120px)',
-                  maskImage: 'linear-gradient(to bottom, black 0%, black 20px, transparent 120px)'
-                }}
-              >
-                {/* Fire Edge Glow (Blue from Search) */}
-                <div 
-                  className="absolute inset-0 pointer-events-none mix-blend-screen"
-                  style={{ 
-                    opacity: 'var(--fire-active, 0)',
-                    background: 'radial-gradient(800px 300px at -50% 0px, rgba(37,99,235,0.7) 0%, rgba(56,189,248,0.3) 45%, transparent 80%)' 
-                  }} 
-                />
-                {/* Fire Edge Glow (Red from Notification) */}
-                <div 
-                  className="absolute inset-0 pointer-events-none mix-blend-screen"
-                  style={{ 
-                    opacity: 'var(--fire-active-red, 0)',
-                    background: 'radial-gradient(600px 300px at 55% 0px, rgba(220,38,38,0.7) 0%, rgba(249,115,22,0.3) 45%, transparent 80%)' 
-                  }} 
-                />
-              </div>
-            </div>
+            <LiquidStroke radius={16} />
             <Card 
               className="w-full h-full p-0 border-slate-200/50 dark:border-white/5 overflow-hidden shadow-lg relative z-10"
               data-testid="widget-weather-landscape"
@@ -703,11 +635,13 @@ export default function Dashboard() {
           </Card>
           </div>
 
-          <div className="col-span-12 lg:col-span-8">
+          <div className="relative col-span-12 lg:col-span-8">
+            <LiquidStroke radius={10} />
             <NewsTickerVertical />
           </div>
 
-          <div className="col-span-12 lg:col-span-4">
+          <div className="relative col-span-12 lg:col-span-4">
+            <LiquidStroke radius={10} />
             <CurrencyRateSlider />
           </div>
         </div>
@@ -773,6 +707,7 @@ export default function Dashboard() {
                 onClick={() => setIsAddAppModalOpen(true)}
                 data-testid="app-tile-add"
               >
+                <LiquidStroke radius={12} />
                 <div className="w-12 h-12 rounded-xl bg-muted/50 flex items-center justify-center mb-2">
                   <Plus className="w-6 h-6 text-muted-foreground" />
                 </div>

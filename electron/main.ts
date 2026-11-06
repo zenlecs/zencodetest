@@ -1,5 +1,5 @@
 import { protocol } from 'electron';
-import { app, BrowserWindow, ipcMain, powerSaveBlocker, session, type WebContents } from 'electron';
+import { app, BrowserWindow, ipcMain, powerSaveBlocker, screen, session, type WebContents } from 'electron';
 
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
 
@@ -47,7 +47,10 @@ const isDev = process.env.NODE_ENV === 'development' || !app.isPackaged;
 
 let mainWindow: BrowserWindow | null = null;
 let launcherWindow: BrowserWindow | null = null;
+let islandWindow: BrowserWindow | null = null;
 let voiceBlockerId: number | null = null;
+let islandQuitting = false;
+let lastVisibleBounds: { x: number; y: number; width: number; height: number } | null = null;
 
 function isAppWindow(contents: WebContents | null): boolean {
   return !!contents && !!mainWindow && !mainWindow.isDestroyed() && contents.id === mainWindow.webContents.id;
@@ -90,6 +93,150 @@ function parseSetCookieHeaders(setCookies: string | string[] | undefined) {
       sessionCookies[key] = value;
     }
   }
+}
+
+function virtualScreenBounds() {
+  const displays = screen.getAllDisplays();
+  if (displays.length === 0) return { x: 0, y: 0, width: 1280, height: 800 };
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  for (const display of displays) {
+    const bounds = display.bounds;
+    minX = Math.min(minX, bounds.x);
+    minY = Math.min(minY, bounds.y);
+    maxX = Math.max(maxX, bounds.x + bounds.width);
+    maxY = Math.max(maxY, bounds.y + bounds.height);
+  }
+  return {
+    x: minX,
+    y: minY,
+    width: Math.max(1, maxX - minX),
+    height: Math.max(1, maxY - minY),
+  };
+}
+
+function islandHostPayload() {
+  const origin = islandWindow && !islandWindow.isDestroyed()
+    ? islandWindow.getBounds()
+    : virtualScreenBounds();
+  const win = mainWindow;
+  const bounds = win && !win.isDestroyed() ? win.getBounds() : null;
+  const onScreen = !!win && !win.isDestroyed() && win.isVisible() && !win.isMinimized()
+    && !!bounds && bounds.width > 40 && bounds.height > 40 && bounds.x > -16000 && bounds.y > -16000;
+  if (onScreen && bounds) {
+    lastVisibleBounds = bounds;
+    return {
+      attached: true,
+      x: bounds.x,
+      y: bounds.y,
+      width: bounds.width,
+      height: bounds.height,
+      originX: origin.x,
+      originY: origin.y,
+    };
+  }
+  const anchor = lastVisibleBounds ?? screen.getPrimaryDisplay().bounds;
+  const area = screen.getDisplayMatching(anchor).workArea;
+  return {
+    attached: false,
+    x: area.x,
+    y: area.y,
+    width: area.width,
+    height: area.height,
+    originX: origin.x,
+    originY: origin.y,
+  };
+}
+
+function publishIslandHost() {
+  if (!islandWindow || islandWindow.isDestroyed()) return;
+  islandWindow.webContents.send('island-host', islandHostPayload());
+}
+
+function fitIslandWindow() {
+  if (!islandWindow || islandWindow.isDestroyed()) return;
+  islandWindow.setBounds(virtualScreenBounds());
+}
+
+function destroyIslandWindow() {
+  if (islandWindow && !islandWindow.isDestroyed()) {
+    islandWindow.removeAllListeners();
+    islandWindow.destroy();
+  }
+  islandWindow = null;
+}
+
+function createIslandWindow() {
+  if (islandWindow && !islandWindow.isDestroyed()) {
+    fitIslandWindow();
+    islandWindow.setIgnoreMouseEvents(true, { forward: true });
+    if (!islandWindow.isVisible()) islandWindow.showInactive();
+    publishIslandHost();
+    return;
+  }
+
+  const bounds = virtualScreenBounds();
+  islandWindow = new BrowserWindow({
+    x: bounds.x,
+    y: bounds.y,
+    width: bounds.width,
+    height: bounds.height,
+    frame: false,
+    transparent: true,
+    backgroundColor: '#00000000',
+    hasShadow: false,
+    roundedCorners: false,
+    skipTaskbar: true,
+    focusable: true,
+    resizable: false,
+    movable: false,
+    minimizable: false,
+    maximizable: false,
+    fullscreenable: false,
+    show: false,
+    alwaysOnTop: true,
+    webPreferences: {
+      preload: getPreloadPath(),
+      additionalArguments: ['--zenos-window=island'],
+      nodeIntegration: false,
+      contextIsolation: true,
+      sandbox: true,
+    },
+  });
+
+  islandWindow.setAlwaysOnTop(true, 'pop-up-menu');
+  islandWindow.setIgnoreMouseEvents(true, { forward: true });
+  loadRenderer(islandWindow, 'app', '/standalone/island', installedAppIndex);
+
+  islandWindow.on('close', (event) => {
+    if (islandQuitting) return;
+    event.preventDefault();
+  });
+
+  islandWindow.once('ready-to-show', () => {
+    if (!islandWindow || islandWindow.isDestroyed()) return;
+    fitIslandWindow();
+    islandWindow.showInactive();
+    publishIslandHost();
+  });
+
+  islandWindow.on('closed', () => {
+    islandWindow = null;
+  });
+}
+
+function bindMainForIsland(win: BrowserWindow) {
+  const publish = () => publishIslandHost();
+  win.on('move', publish);
+  win.on('resize', publish);
+  win.on('maximize', publish);
+  win.on('unmaximize', publish);
+  win.on('minimize', publish);
+  win.on('restore', publish);
+  win.on('hide', publish);
+  win.on('show', publish);
 }
 
 function mergeCookieHeader(incoming?: string): string {
@@ -210,6 +357,7 @@ function createMainWindow() {
   });
 
   loadRenderer(mainWindow, 'app', '/os', installedAppIndex);
+  bindMainForIsland(mainWindow);
 
   mainWindow.once('ready-to-show', () => {
     if (!mainWindow || mainWindow.isDestroyed()) return;
@@ -221,6 +369,7 @@ function createMainWindow() {
 
   mainWindow.on('closed', () => {
     stopVoiceBlocker();
+    destroyIslandWindow();
     mainWindow = null;
     // App closed without explicit logout IPC — return to launcher auth surface
     clearSessionCookies();
@@ -239,6 +388,43 @@ function createMainWindow() {
 }
 
 let installedAppIndex: string | null = null;
+let communicationWindow: BrowserWindow | null = null;
+
+function createCommunicationWindow() {
+  if (communicationWindow && !communicationWindow.isDestroyed()) {
+    communicationWindow.focus();
+    return;
+  }
+
+  communicationWindow = new BrowserWindow({
+    icon: getAppIconPath(),
+    width: 1200,
+    height: 800,
+    minWidth: 720,
+    minHeight: 400,
+    frame: false,
+    transparent: true,
+    backgroundColor: "#00000000",
+    hasShadow: false,
+    resizable: true,
+    webPreferences: {
+      preload: getPreloadPath(),
+      additionalArguments: ["--zenos-window=app"],
+      nodeIntegration: false,
+      contextIsolation: true,
+      sandbox: true,
+    },
+  });
+
+  loadRenderer(communicationWindow, "app", "/standalone/communications", installedAppIndex);
+
+  communicationWindow.on("closed", () => {
+    communicationWindow = null;
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send("communication-window-closed");
+    }
+  });
+}
 
 async function handleAuthLogin() {
   installedAppIndex = await installedIndexPath();
@@ -260,6 +446,7 @@ async function handleAuthLogin() {
 
 function handleAuthLogout() {
   clearSessionCookies();
+  destroyIslandWindow();
 
   if (mainWindow && !mainWindow.isDestroyed()) {
     // Prevent closed-handler from double-firing auth-logged-out / clearing again
@@ -374,6 +561,13 @@ app.whenReady().then(() => {
     }
   });
   createLauncherWindow();
+  const refitIsland = () => {
+    fitIslandWindow();
+    publishIslandHost();
+  };
+  screen.on('display-added', refitIsland);
+  screen.on('display-removed', refitIsland);
+  screen.on('display-metrics-changed', refitIsland);
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -390,6 +584,7 @@ app.on('window-all-closed', () => {
 });
 
 app.on('before-quit', () => {
+  islandQuitting = true;
   stopVoiceBlocker();
 });
 
@@ -432,17 +627,96 @@ ipcMain.on('window-close', () => {
   win?.close();
 });
 
+ipcMain.on('detach-communication', () => {
+  createCommunicationWindow();
+});
+
+ipcMain.on('island-visibility', (event, visible) => {
+  const show = visible === true;
+  if (show) createIslandWindow();
+  else if (islandWindow && !islandWindow.isDestroyed()) {
+    islandWindow.setIgnoreMouseEvents(true, { forward: true });
+    islandWindow.hide();
+  }
+  for (const win of [mainWindow, islandWindow]) {
+    if (!win || win.isDestroyed() || win.webContents === event.sender) continue;
+    win.webContents.send('island-visibility', show);
+  }
+});
+
+ipcMain.on('island-sync', () => {
+  publishIslandHost();
+});
+
+ipcMain.on('island-hit', (_event, interactive) => {
+  if (!islandWindow || islandWindow.isDestroyed()) return;
+  if (interactive) islandWindow.setIgnoreMouseEvents(false);
+  else islandWindow.setIgnoreMouseEvents(true, { forward: true });
+});
+
+ipcMain.on('island-focus', (_event, on) => {
+  if (!islandWindow || islandWindow.isDestroyed()) return;
+  if (on) islandWindow.focus();
+  else islandWindow.blur();
+});
+
+ipcMain.on('island-voice', (event, payload) => {
+  if (!islandWindow || islandWindow.isDestroyed()) return;
+  if (event.sender === islandWindow.webContents) return;
+  islandWindow.webContents.send('island-voice', payload);
+});
+
+ipcMain.on('island-notifications', (event, payload) => {
+  for (const win of [mainWindow, islandWindow]) {
+    if (!win || win.isDestroyed() || win.webContents === event.sender) continue;
+    win.webContents.send('island-notifications', payload);
+  }
+});
+
+let bloomAwake = false;
+
+function refreshContentThrottling() {
+  const throttle = !(bloomAwake || voiceBlockerId !== null);
+  for (const win of [mainWindow, communicationWindow]) {
+    if (!win || win.isDestroyed()) continue;
+    win.webContents.setBackgroundThrottling(throttle);
+  }
+}
+
+ipcMain.on('island-bloom', (event, payload) => {
+  const blue = Number(payload?.blue) || 0;
+  const red = Number(payload?.red) || 0;
+  const awake = blue > 0.01 || red > 0.01;
+  if (awake !== bloomAwake) {
+    bloomAwake = awake;
+    refreshContentThrottling();
+  }
+  for (const win of [mainWindow, communicationWindow]) {
+    if (!win || win.isDestroyed() || win.webContents === event.sender) continue;
+    win.webContents.send('island-bloom', payload);
+  }
+});
+
+ipcMain.on('island-navigate', (_event, path) => {
+  if (typeof path !== 'string' || !path.startsWith('/')) return;
+  if (!mainWindow || mainWindow.isDestroyed()) return;
+  if (mainWindow.isMinimized()) mainWindow.restore();
+  if (!mainWindow.isVisible()) mainWindow.show();
+  mainWindow.focus();
+  mainWindow.webContents.send('island-navigate', path);
+});
+
 // Theme sync
 ipcMain.on('voice-session-start', (event) => {
   if (!isAppWindow(event.sender)) return;
-  event.sender.setBackgroundThrottling(false);
   startVoiceBlocker();
+  refreshContentThrottling();
 });
 
 ipcMain.on('voice-session-stop', (event) => {
   if (!isAppWindow(event.sender)) return;
-  event.sender.setBackgroundThrottling(true);
   stopVoiceBlocker();
+  refreshContentThrottling();
 });
 
 ipcMain.on('theme-sync', (event, theme) => {

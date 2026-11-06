@@ -1,7 +1,7 @@
 declare global {
   interface Window {
     /** Electron window role: launcher keeps auth; app is post-login product UI */
-    zenosWindowRole?: "launcher" | "app";
+    zenosWindowRole?: "launcher" | "app" | "island";
     electron?: {
       send: (channel: string, data?: any) => void;
       receive: (channel: string, func: (...args: any[]) => void) => void;

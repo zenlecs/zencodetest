@@ -38,7 +38,7 @@ export function AppTile({
     <div
       onClick={handleClick}
       className={cn(
-        "group relative rounded-xl border border-slate-200/50 dark:border-white/5 bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 dark:from-[#0a0a0c] dark:via-[#0d1117] dark:to-[#0a0a0c] shadow-lg cursor-pointer transition-all duration-300 flex flex-col gap-3 h-full overflow-hidden",
+        "group relative flex h-full cursor-pointer flex-col gap-3 overflow-hidden rounded-xl border border-slate-200/50 bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 shadow-lg transition-all duration-300 dark:border-white/5 dark:from-[#0a0a0c] dark:via-[#0d1117] dark:to-[#0a0a0c]",
         sizeClasses[size]
       )}
       data-testid={testId}

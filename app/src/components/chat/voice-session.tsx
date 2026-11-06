@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Conversation } from "@elevenlabs/client";
-import { setVoiceSpeaking } from "@/lib/voice-speaking";
+import { setVoiceCue, setVoiceSpeaking } from "@/lib/voice-speaking";
 
 let sessionLock: Promise<void> = Promise.resolve();
 
@@ -49,7 +49,13 @@ export function VoiceSession({ active }: { active: boolean }) {
           signedUrl,
           connectionType: "websocket",
           onModeChange: ({ mode }) => {
-            if (!cancelled) setVoiceSpeaking(mode === "speaking");
+            if (cancelled) return;
+            setVoiceSpeaking(mode === "speaking");
+          },
+          onMessage: ({ message, role }) => {
+            if (cancelled || role !== "agent") return;
+            const phrase = message.split(/\s+/).slice(0, 4).join(" ");
+            if (phrase) setVoiceCue(phrase);
           },
           onInterruption: () => {
             if (!cancelled) setVoiceSpeaking(false);
@@ -79,6 +85,7 @@ export function VoiceSession({ active }: { active: boolean }) {
       cancelled = true;
       abort.abort();
       setVoiceSpeaking(false);
+      setVoiceCue("");
       window.electron?.send("voice-session-stop");
       sessionLock = finished.then(async () => {
         await conversation?.endSession().catch(() => undefined);

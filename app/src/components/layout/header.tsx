@@ -20,6 +20,7 @@ import { motion, AnimatePresence, animate } from "motion/react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { subscribeVoiceSpeaking } from "@/lib/voice-speaking";
+import { useDynamicIsland } from "@/lib/dynamic-island";
 
 
 const isElectron = !!window.electron;
@@ -60,13 +61,15 @@ export function Header() {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [assistantSpeaking, setAssistantSpeaking] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const isSearchExpanded = isSearchHovered || isSearchFocused || assistantSpeaking;
+  const islandOn = useDynamicIsland();
+  const isSearchExpanded = !islandOn && (isSearchHovered || isSearchFocused || assistantSpeaking);
 
   useEffect(() => subscribeVoiceSpeaking(setAssistantSpeaking), []);
   const { toast } = useToast();
 
   
   useEffect(() => {
+    if (islandOn) return;
     let controls: any;
     if (isSearchExpanded) {
       controls = animate(0, 1, {
@@ -86,7 +89,7 @@ export function Header() {
     return () => {
       if (controls) controls.stop();
     };
-  }, [isSearchExpanded]);
+  }, [isSearchExpanded, islandOn]);
 
 
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
@@ -210,6 +213,7 @@ export function Header() {
     return () => window.clearTimeout(timer);
   }, [showFireEffect]);
   useEffect(() => {
+    if (islandOn) return;
     let controls: any;
     if (showFireEffect) {
       controls = animate(0, 1, {
@@ -230,7 +234,7 @@ export function Header() {
     return () => {
       if (controls) controls.stop();
     };
-  }, [showFireEffect]);
+  }, [showFireEffect, islandOn]);
 
   return (
     <header className="h-12 flex items-center justify-between px-4 sticky top-0 z-30" style={{ WebkitAppRegion: 'drag' } as any}>
@@ -250,6 +254,7 @@ export function Header() {
       <div className="w-24" />
 
       <div className="flex-1 flex justify-center h-full items-center relative">
+        {!islandOn && (
         <motion.div 
           style={{ WebkitAppRegion: 'no-drag' } as any}
           className={cn(
@@ -410,6 +415,7 @@ export function Header() {
             </div>
           )}
         </motion.div>
+        )}
       </div>
 
       <div className="flex items-center gap-1 h-full">

@@ -37,7 +37,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { GlobalCallOverlay } from "@/components/layout/global-call-overlay";
-import { WindowPortal } from "@/components/ui/window-portal";
+import { openDetachedWindow, WindowPortal } from "@/components/ui/window-portal";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -68,6 +68,7 @@ import { encryptP2PMessage, decryptP2PMessage } from "@/lib/zk-vault";
 import { useAudioAnalyzer } from "@/hooks/use-audio-analyzer";
 import { useToast } from "@/hooks/use-toast";
 import { AudioSpectrum, BackgroundSpectrum } from "@/components/audio-spectrum";
+import { LiquidStroke } from "@/components/ui/liquid-stroke";
 
 interface WorkspaceFile {
   id: string;
@@ -98,7 +99,19 @@ export default function CommunicationsPage() {
   const [workspaceSessions, setWorkspaceSessions] = useState<Map<number, WorkspaceSession>>(new Map());
   const [isSearchMode, setIsSearchMode] = useState(false);
   const [submittedQuery, setSubmittedQuery] = useState("");
-  const [isDetached, setIsDetached] = useState(false);
+  const ownWindow = window.location.hash.includes("/standalone/communications");
+  const [detachedWindow, setDetachedWindow] = useState<Window | null>(null);
+  const [externalOpen, setExternalOpen] = useState(false);
+  const isDetached = ownWindow || detachedWindow !== null;
+
+  useEffect(() => {
+    if (!window.electron || ownWindow) return;
+    const closed = () => setExternalOpen(false);
+    window.electron.receive("communication-window-closed", closed);
+    return () => {
+      window.electron?.removeListener("communication-window-closed", closed);
+    };
+  }, [ownWindow]);
   const [showTitle, setShowTitle] = useState(false);
   const isStandaloneWindow = false; // Not used with React Portals
   
@@ -609,39 +622,16 @@ export default function CommunicationsPage() {
 
   const content = (
     <div className={`relative w-full ${isDetached ? 'h-full' : 'max-w-[1265px] mx-auto h-[81vh] mt-[5vh]'}`}>
-      {/* Liquid Glass Outer Stroke */}
-      {!isDetached && (
-        <div 
-          className={`absolute inset-[-2px] bg-black/5 dark:bg-white/10 backdrop-blur-xl pointer-events-none rounded-[16px] z-0 overflow-hidden`}
-          style={{ 
-            WebkitMaskImage: 'linear-gradient(to bottom, black 0%, black 20px, transparent 120px)',
-            maskImage: 'linear-gradient(to bottom, black 0%, black 20px, transparent 120px)' 
-          }}
-        >
-          {/* Fire Edge Glow (Blue from Search) */}
-          <div 
-            className="absolute inset-0 pointer-events-none mix-blend-screen"
-            style={{ 
-              opacity: 'var(--fire-active, 0)',
-              background: 'radial-gradient(800px 300px at top center, rgba(37,99,235,0.7) 0%, rgba(56,189,248,0.3) 45%, transparent 80%)' 
-            }} 
-          />
-          {/* Fire Edge Glow (Red from Notification) */}
-          <div 
-            className="absolute inset-0 pointer-events-none mix-blend-screen"
-            style={{ 
-              opacity: 'var(--fire-active-red, 0)',
-              background: 'radial-gradient(600px 300px at 85% 0px, rgba(220,38,38,0.7) 0%, rgba(249,115,22,0.3) 45%, transparent 80%)' 
-            }} 
-          />
-        </div>
-      )}
+      <LiquidStroke radius={isDetached ? 24 : 16} />
       
-      <div className={`w-full h-full flex flex-col overflow-hidden relative z-10 bg-background transition-colors duration-500 ease-out ${isDetached ? 'rounded-[24px]' : 'rounded-[14px] shadow-[0_40px_80px_-20px_rgba(190,175,155,0.35),_0_20px_40px_-10px_rgba(190,175,155,0.2)] dark:shadow-[0_20px_80px_rgba(0,0,0,0.8)]'}`}>
+      <div
+        className={`relative z-10 flex h-full w-full flex-col overflow-hidden bg-background transition-colors duration-500 ease-out ${isDetached ? "rounded-[24px]" : "rounded-[14px] shadow-[0_40px_80px_-20px_rgba(190,175,155,0.35),_0_20px_40px_-10px_rgba(190,175,155,0.2)] dark:shadow-[0_20px_80px_rgba(0,0,0,0.8)]"}`}
+        style={isDetached ? { clipPath: "inset(0 round 24px)" } : undefined}
+      >
         
         {isDetached ? (
           <div 
-            className="w-full h-10 flex-shrink-0 flex items-center justify-between px-4 bg-background border-b border-border/10 transition-colors duration-500 ease-out" 
+            className="flex h-10 w-full flex-shrink-0 items-center justify-between overflow-hidden rounded-t-[24px] border-b border-border/10 bg-background px-4 transition-colors duration-500 ease-out" 
             style={{ WebkitAppRegion: 'drag' } as any}
           >
             <div className="flex items-center">
@@ -650,7 +640,14 @@ export default function CommunicationsPage() {
             </div>
             <div className="flex items-center gap-2" style={{ WebkitAppRegion: 'no-drag' } as any}>
               <button 
-                onClick={() => setIsDetached(false)}
+                onClick={() => {
+                  if (ownWindow) {
+                    window.electron?.send("window-close");
+                    return;
+                  }
+                  detachedWindow?.close();
+                  setDetachedWindow(null);
+                }}
                 className="p-1.5 rounded-md hover:bg-muted text-muted-foreground transition-colors"
                 title="Ana Pencereye Geri Dön"
               >
@@ -660,7 +657,15 @@ export default function CommunicationsPage() {
           </div>
         ) : (
           <button 
-            onClick={() => setIsDetached(true)}
+            onClick={() => {
+              if (window.electron) {
+                window.electron.send("detach-communication");
+                setExternalOpen(true);
+                return;
+              }
+              const next = openDetachedWindow("ZenOS İletişim");
+              if (next) setDetachedWindow(next);
+            }}
             className="absolute top-3 right-3 z-50 p-2 rounded-lg bg-background/80 hover:bg-background backdrop-blur-md border border-border/50 shadow-sm text-foreground/70 hover:text-foreground transition-all flex items-center justify-center"
             title="Yeni Pencerede Aç"
           >
@@ -1044,15 +1049,17 @@ export default function CommunicationsPage() {
     </div>
   );
 
-  if (isDetached) {
+  if (!ownWindow && (externalOpen || detachedWindow)) {
     return (
       <>
         <div className="w-full max-w-[1265px] h-[80vh] mx-auto mt-[5vh] flex items-center justify-center">
           <img src="./connect-gray.svg" alt="ZenOS İletişim" className="w-[120px] h-[120px] opacity-80" />
         </div>
-        <WindowPortal onClose={() => setIsDetached(false)} title="ZenOS İletişim">
-          {content}
-        </WindowPortal>
+        {detachedWindow && (
+          <WindowPortal target={detachedWindow} onClose={() => setDetachedWindow(null)}>
+            {content}
+          </WindowPortal>
+        )}
       </>
     );
   }

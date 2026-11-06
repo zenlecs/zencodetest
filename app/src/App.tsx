@@ -13,6 +13,10 @@ import { FloatingNav } from "@/components/layout/floating-nav";
 import { LiveChatToggle } from "@/components/layout/live-chat-toggle";
 import { Logo } from "@/components/layout/logo";
 import { Header } from "@/components/layout/header";
+import { DynamicIsland } from "@/components/layout/dynamic-island";
+import { bindIslandNotifications } from "@/lib/island-bridge";
+import { applyIslandBloom, type IslandBloom } from "@/lib/island-bloom";
+import { readDynamicIsland, useDynamicIsland } from "@/lib/dynamic-island";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
 import WalletPage from "@/pages/wallet";
@@ -28,11 +32,69 @@ import { WebSocketProvider } from "@/lib/contexts/websocket-context";
 import { CallProvider } from "@/lib/contexts/call-context";
 import { GlobalCallOverlay } from "@/components/layout/global-call-overlay";
 
+const isElectron = !!window.electron;
+const isIslandWindow = window.location.hash.includes("/standalone/island");
+
+function IslandHostBridge() {
+  const [, setLocation] = useLocation();
+  const enabled = useDynamicIsland();
+
+  useEffect(() => {
+    if (!isElectron || window.zenosWindowRole === "island") return;
+    window.electron?.send("island-visibility", readDynamicIsland());
+  }, [enabled]);
+
+  useEffect(() => {
+    if (!isElectron || window.zenosWindowRole === "island") return;
+    const onNav = (path: string) => {
+      if (typeof path === "string" && path.startsWith("/")) setLocation(path);
+    };
+    window.electron?.receive("island-navigate", onNav);
+    return () => window.electron?.removeListener("island-navigate", onNav);
+  }, [setLocation]);
+
+  useEffect(() => {
+    if (!isElectron || window.zenosWindowRole === "island") return;
+    return bindIslandNotifications();
+  }, []);
+
+  return null;
+}
+
+function IslandBloomBridge() {
+  useEffect(() => {
+    if (!window.electron || window.zenosWindowRole === "island") return;
+    const onBloom = (payload: IslandBloom) => {
+      if (!payload || typeof payload.x !== "number") return;
+      applyIslandBloom(payload);
+    };
+    window.electron.receive("island-bloom", onBloom);
+    return () => window.electron?.removeListener("island-bloom", onBloom);
+  }, []);
+  return null;
+}
+
+function IslandSurface() {
+  useEffect(() => {
+    const root = document.getElementById("root");
+    if (root) root.style.overflow = "visible";
+    return bindIslandNotifications();
+  }, []);
+
+  return (
+    <WouterRouter hook={useHashLocation}>
+      <div className="relative h-screen w-screen overflow-visible bg-transparent">
+        <DynamicIsland />
+      </div>
+    </WouterRouter>
+  );
+}
+
 function AppLayout({ children }: { children: React.ReactNode }) {
   const [location, navigate] = useLocation();
 
   return (
-    <div className="h-screen w-full bg-background flex flex-col rounded-xl overflow-hidden border border-border/30 shadow-2xl transition-[padding,margin,border-radius,background-color] duration-500 ease-out">
+    <div className="relative h-screen w-full bg-background flex flex-col rounded-xl overflow-hidden border border-border/30 shadow-2xl transition-[padding,margin,border-radius,background-color] duration-500 ease-out">
       <Logo />
       <FloatingNav />
       <LiveChatToggle />
@@ -55,6 +117,8 @@ function AppLayout({ children }: { children: React.ReactNode }) {
           </AnimatePresence>
         </main>
       </div>
+      {!isElectron && <DynamicIsland />}
+      <IslandHostBridge />
       <GlobalCallOverlay />
     </div>
   );
@@ -94,7 +158,7 @@ function ProtectedRoutes() {
 function StandaloneRoutes() {
   return (
     <RequireAuth>
-      <div className="w-screen h-screen bg-background overflow-hidden p-0 m-0">
+      <div className="h-screen w-screen overflow-hidden bg-transparent p-0 m-0" style={{ clipPath: "inset(0 round 24px)" }}>
         <Switch>
           <Route path="/standalone/communications" component={CommunicationsPage} />
           <Route component={NotFound} />
@@ -103,9 +167,6 @@ function StandaloneRoutes() {
     </RequireAuth>
   );
 }
-
-
-const isElectron = !!window.electron;
 
 function RootRedirect() {
   const [, setLocation] = useLocation();
@@ -142,6 +203,16 @@ function Router() {
 }
 
 function App() {
+  if (isIslandWindow) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <IslandSurface />
+        </ThemeProvider>
+      </QueryClientProvider>
+    );
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
@@ -151,6 +222,7 @@ function App() {
               <WebSocketProvider>
                 <CallProvider>
                   <Router />
+                  <IslandBloomBridge />
                   <Toaster />
                 </CallProvider>
               </WebSocketProvider>

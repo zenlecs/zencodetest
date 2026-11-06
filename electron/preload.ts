@@ -1,6 +1,26 @@
 import { contextBridge, ipcRenderer } from 'electron'
 
-const windowRole = process.argv.includes('--zenos-window=app') ? 'app' : 'launcher';
+const windowRole = process.argv.includes('--zenos-window=island')
+  ? 'island'
+  : process.argv.includes('--zenos-window=app')
+    ? 'app'
+    : 'launcher';
+
+const wrappedListeners = new Map<string, WeakMap<Function, (_event: unknown, ...args: any[]) => void>>();
+
+function listenerWrapper(channel: string, func: Function) {
+  let channelMap = wrappedListeners.get(channel);
+  if (!channelMap) {
+    channelMap = new WeakMap();
+    wrappedListeners.set(channel, channelMap);
+  }
+  let wrapper = channelMap.get(func);
+  if (!wrapper) {
+    wrapper = (_event: unknown, ...args: any[]) => func(...args);
+    channelMap.set(func, wrapper);
+  }
+  return wrapper;
+}
 
 // Expose protected methods that allow the renderer process to use
 // the ipcRenderer without exposing the entire object
@@ -29,7 +49,15 @@ contextBridge.exposeInMainWorld(
         'payload-status',
         'payload-install',
         'voice-session-start',
-        'voice-session-stop'
+        'voice-session-stop',
+        'island-visibility',
+        'island-sync',
+        'island-hit',
+        'island-focus',
+        'island-voice',
+        'island-notifications',
+        'island-navigate',
+        'island-bloom'
       ];
       if (validChannels.includes(channel)) {
         ipcRenderer.send(channel, data);
@@ -44,10 +72,16 @@ contextBridge.exposeInMainWorld(
         'auth-logged-out',
         'auth-session-ready',
         'payload-progress',
+        'island-visibility',
+        'island-host',
+        'island-voice',
+        'island-notifications',
+        'island-navigate',
+        'island-bloom',
       ];
       if (validChannels.includes(channel)) {
         // Deliberately strip event as it includes `sender`
-        ipcRenderer.on(channel, (event, ...args) => func(...args));
+        ipcRenderer.on(channel, listenerWrapper(channel, func));
       }
     },
     removeListener: (channel: string, func: (...args: any[]) => void) => {
@@ -59,9 +93,16 @@ contextBridge.exposeInMainWorld(
         'auth-logged-out',
         'auth-session-ready',
         'payload-progress',
+        'island-visibility',
+        'island-host',
+        'island-voice',
+        'island-notifications',
+        'island-navigate',
+        'island-bloom',
       ];
       if (validChannels.includes(channel)) {
-        ipcRenderer.removeListener(channel, func);
+        const wrapper = wrappedListeners.get(channel)?.get(func);
+        if (wrapper) ipcRenderer.removeListener(channel, wrapper);
       }
     },
     invoke: async (channel: string, data: any) => {

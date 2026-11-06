@@ -1,6 +1,6 @@
 import https from "https";
 
-const DEFAULT_AGENT_ID = "agent_8301m6edqywaf10av8gnb1st0562";
+const DEFAULT_AGENT_ID = "agent_2101m6ev9kr8faptzanfqb0hyge0";
 
 function httpsGet(url: string, headers: Record<string, string>, redirects = 0): Promise<{ status: number; body: string }> {
   return new Promise((resolve, reject) => {

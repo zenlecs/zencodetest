@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { LiquidStroke } from "@/components/ui/liquid-stroke";
 
 interface BentoCardProps {
   title?: string;
@@ -33,16 +34,14 @@ export function BentoCard({
   "data-testid": testId,
 }: BentoCardProps) {
   return (
-    <Card
-      className={cn(
-        "rounded-xl border border-slate-200/50 dark:border-white/5 bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 dark:from-[#0a0a0c] dark:via-[#0d1117] dark:to-[#0a0a0c] overflow-hidden transition-all duration-200 shadow-lg",
-        spanClasses[span],
-        interactive && "cursor-pointer hover-elevate active-elevate-2",
-        className
-      )}
-      onClick={onClick}
-      data-testid={testId}
-    >
+    <div className={cn("relative", spanClasses[span], className)} onClick={onClick} data-testid={testId}>
+      <LiquidStroke radius={12} />
+      <Card
+        className={cn(
+          "h-full rounded-xl border border-slate-200/50 dark:border-white/5 bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 dark:from-[#0a0a0c] dark:via-[#0d1117] dark:to-[#0a0a0c] overflow-hidden transition-all duration-200 shadow-lg",
+          interactive && "cursor-pointer hover-elevate active-elevate-2"
+        )}
+      >
       {title && (
         <CardHeader className="px-4 py-3 flex flex-row items-center gap-2 space-y-0 bg-slate-200/50 dark:bg-black/20 border-b border-slate-300/50 dark:border-white/10">
           {icon && <span className="text-muted-foreground flex-shrink-0">{icon}</span>}
@@ -50,6 +49,7 @@ export function BentoCard({
         </CardHeader>
       )}
       <CardContent className={cn("p-4", !title && "pt-6")}>{children}</CardContent>
-    </Card>
+      </Card>
+    </div>
   );
 }
