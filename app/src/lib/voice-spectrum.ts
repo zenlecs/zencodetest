@@ -32,6 +32,8 @@ export function subscribeVoiceSpectrum(listener: Listener) {
 
 export function clearVoiceSpectrum() {
   emit({ ...REST });
+  lastRelay = 0;
+  relaySpectrum();
 }
 
 function average(bins: Uint8Array, from: number, to: number) {
@@ -40,6 +42,21 @@ function average(bins: Uint8Array, from: number, to: number) {
   let sum = 0;
   for (let i = start; i < end; i += 1) sum += bins[i];
   return sum / (end - start) / 255;
+}
+
+let lastRelay = 0;
+
+function relaySpectrum() {
+  if (typeof window === "undefined" || !window.electron || window.zenosWindowRole === "island") return;
+  const now = performance.now();
+  if (now - lastRelay < 50) return;
+  lastRelay = now;
+  window.electron.send("island-voice", { spectrum: frame });
+}
+
+export function ingestVoiceSpectrum(next: VoiceSpectrum) {
+  frame = { ...next };
+  listeners.forEach((listener) => listener(frame));
 }
 
 export function sampleAssistantOutput(bins: Uint8Array, volume: number) {
@@ -69,4 +86,5 @@ export function sampleAssistantOutput(bins: Uint8Array, volume: number) {
     high: audible ? damp(frame.high, high, 0.4, 0.14) : damp(frame.high, 0, 0.14, 0.14),
     centroid: damp(frame.centroid, centroid, 0.16, 0.1),
   });
+  relaySpectrum();
 }

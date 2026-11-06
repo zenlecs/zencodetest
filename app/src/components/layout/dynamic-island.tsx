@@ -6,9 +6,8 @@ import { Bell, MessageCircle, Mic, Settings, Sparkles, X } from "lucide-react";
 import { StudioContextMenu } from "@/components/studio/StudioContextMenu";
 import type { MenuItem } from "@/components/studio/contextMenuModel";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { VoiceSession } from "@/components/chat/voice-session";
-import { stopVoiceAssistant, toggleVoiceActive, useVoiceActive } from "@/lib/voice-assistant";
-import { subscribeVoiceSpectrum, type VoiceSpectrum } from "@/lib/voice-spectrum";
+import { setVoiceActive, stopVoiceAssistant, toggleVoiceActive, useVoiceActive } from "@/lib/voice-assistant";
+import { ingestVoiceSpectrum, subscribeVoiceSpectrum, type VoiceSpectrum } from "@/lib/voice-spectrum";
 import { subscribeVoiceCue, subscribeVoiceSpeaking } from "@/lib/voice-speaking";
 import { readIslandOffset, writeIslandOffset } from "@/lib/dynamic-island";
 import { type IslandHost } from "@/lib/island-bridge";
@@ -301,7 +300,15 @@ function Island() {
   useEffect(() => {
     const stopSpeaking = subscribeVoiceSpeaking(setSpeaking);
     if (!overlay) return stopSpeaking;
-    const onVoice = (payload: { speaking?: boolean; cue?: string }) => {
+    const onVoice = (payload: { speaking?: boolean; cue?: string; active?: boolean; spectrum?: VoiceSpectrum }) => {
+      if (payload?.spectrum && typeof payload.spectrum.level === "number") {
+        ingestVoiceSpectrum(payload.spectrum);
+        return;
+      }
+      if (typeof payload?.active === "boolean") {
+        setVoiceActive(payload.active);
+        return;
+      }
       setSpeaking(!!payload?.speaking);
       const next = typeof payload?.cue === "string" ? payload.cue : "";
       setCue(next);
@@ -525,7 +532,6 @@ function Island() {
         height: hostBox.height,
       } : { left: 0, top: 0, width: 0, height: 0, visibility: "hidden" }) : undefined}
     >
-      <VoiceSession active={voiceOn} />
       <span
         ref={cueMeasureRef}
         className="pointer-events-none absolute whitespace-nowrap text-[11px] font-medium"

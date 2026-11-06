@@ -57,35 +57,49 @@ function installVoiceIpc() {
     window.electron.receive("island-voice-control", (payload: { active?: boolean }) => {
       if (typeof payload?.active === "boolean") emit(payload.active);
     });
-    window.electron.send("island-voice-sync");
     return;
   }
   window.electron.receive("island-voice-state", (payload: { active?: boolean }) => {
     if (typeof payload?.active === "boolean") emit(payload.active);
   });
+  window.electron.receive("island-bloom", (payload: { voiceActive?: boolean; x?: number }) => {
+    if (!payload || typeof payload.voiceActive !== "boolean" || typeof payload.x === "number") return;
+    emit(payload.voiceActive);
+  });
 }
 
 installVoiceIpc();
 
-export function toggleVoiceActive() {
+export function setVoiceActive(next: boolean) {
+  emit(next);
+}
+
+function publishVoiceActive(next: boolean) {
+  const electron = window.electron;
+  if (!electron) return;
   if (window.zenosWindowRole === "island") {
-    window.electron?.send("island-voice-control", { toggle: true });
+    electron.send("island-bloom", { voiceActive: next });
+    return;
+  }
+  electron.send("island-voice", { active: next });
+}
+
+export function toggleVoiceActive() {
+  const next = !active;
+  emit(next);
+  if (window.zenosWindowRole === "island") {
+    publishVoiceActive(next);
     return;
   }
   void supportsOverlay().then((overlay) => {
-    if (overlay && readDynamicIsland()) {
-      window.electron?.send("island-voice-control", { toggle: true });
-      return;
-    }
-    emit(!active);
+    if (overlay && readDynamicIsland()) publishVoiceActive(next);
   });
 }
 
 export function stopVoiceAssistant() {
   if (!active) return;
-  if (window.zenosWindowRole === "island" || (overlayKnown && readDynamicIsland())) {
-    window.electron?.send("island-voice-control", { active: false });
-    return;
-  }
   emit(false);
+  if (window.zenosWindowRole === "island" || (overlayKnown && readDynamicIsland())) {
+    publishVoiceActive(false);
+  }
 }

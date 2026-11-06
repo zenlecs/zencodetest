@@ -85,9 +85,8 @@ function IslandHostBridge({ overlay }: { overlay: boolean }) {
 }
 
 function VoiceHost() {
-  const islandOn = useDynamicIsland();
   const active = useVoiceActive();
-  if (islandOn || window.zenosWindowRole === "island") return null;
+  if (window.zenosWindowRole === "island" || window.location.hash.includes("/standalone/")) return null;
   return <VoiceSession active={active} />;
 }
 
