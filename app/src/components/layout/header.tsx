@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
-import { Bell, Moon, Sun, Sparkles, Command, Send, LogOut, User, Settings, Wallet, Calculator, LogIn, Check, CheckCheck, X } from "lucide-react";
+import { Bell, Moon, Sun, LogOut, User, Settings, Wallet, Calculator, LogIn, Check, CheckCheck, X } from "lucide-react";
 import { WindowControls } from "./window-controls";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -16,13 +16,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { motion, AnimatePresence, animate } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { subscribeVoiceSpeaking } from "@/lib/voice-speaking";
-import { useDynamicIsland } from "@/lib/dynamic-island";
-
-
 const isElectron = !!window.electron;
 
 interface Notification {
@@ -54,44 +50,10 @@ function formatTimeAgo(dateString: string): string {
 }
 
 export function Header() {
-  const [location, setLocation] = useLocation();
+  const [, setLocation] = useLocation();
   const { theme, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
-  const [isSearchHovered, setIsSearchHovered] = useState(false);
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [assistantSpeaking, setAssistantSpeaking] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const islandOn = useDynamicIsland();
-  const isSearchExpanded = !islandOn && (isSearchHovered || isSearchFocused || assistantSpeaking);
-
-  useEffect(() => subscribeVoiceSpeaking(setAssistantSpeaking), []);
   const { toast } = useToast();
-
-  
-  useEffect(() => {
-    if (islandOn) return;
-    let controls: any;
-    if (isSearchExpanded) {
-      controls = animate(0, 1, {
-        duration: 0.8,
-        delay: 0.1,
-        ease: "easeOut",
-        onUpdate: (latest) => document.documentElement.style.setProperty('--fire-active', latest.toString())
-      });
-    } else {
-      const current = Number(document.documentElement.style.getPropertyValue('--fire-active')) || 0;
-      controls = animate(current, 0, {
-        duration: 0.5,
-        ease: "easeInOut",
-        onUpdate: (latest) => document.documentElement.style.setProperty('--fire-active', latest.toString())
-      });
-    }
-    return () => {
-      if (controls) controls.stop();
-    };
-  }, [isSearchExpanded, islandOn]);
-
-
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
   const [showFireEffect, setShowFireEffect] = useState(false);
@@ -176,25 +138,6 @@ export function Header() {
     await logout();
   };
 
-  const navigateToChat = (query?: string) => {
-    const q = (query !== undefined ? query : searchQuery).trim();
-    if (q) {
-      setLocation(`/os/chat?q=${encodeURIComponent(q)}`);
-    } else {
-      setLocation("/os/chat");
-    }
-  };
-
-  const handleSearch = () => {
-    navigateToChat();
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      handleSearch();
-    }
-  };
-
   const notifications = notificationData?.notifications || [];
   const unreadCount = notificationData?.unreadCount || 0;
 
@@ -212,211 +155,15 @@ export function Header() {
     const timer = window.setTimeout(() => setShowFireEffect(false), 3000);
     return () => window.clearTimeout(timer);
   }, [showFireEffect]);
-  useEffect(() => {
-    if (islandOn) return;
-    let controls: any;
-    if (showFireEffect) {
-      controls = animate(0, 1, {
-        duration: 0.8,
-        delay: 0.2, // Let the flame form first
-        ease: "easeOut",
-        onUpdate: (latest) => document.documentElement.style.setProperty('--fire-active-red', latest.toString())
-      });
-    } else {
-      const current = Number(document.documentElement.style.getPropertyValue('--fire-active-red')) || 0;
-      controls = animate(current, 0, {
-        duration: 1.0,
-        delay: 0.1, // Wait a moment while the flame shrinks
-        ease: "easeIn",
-        onUpdate: (latest) => document.documentElement.style.setProperty('--fire-active-red', latest.toString())
-      });
-    }
-    return () => {
-      if (controls) controls.stop();
-    };
-  }, [showFireEffect, islandOn]);
 
   return (
     <header className="h-12 flex items-center justify-between px-4 sticky top-0 z-30" style={{ WebkitAppRegion: 'drag' } as any}>
       {/* Liquid Glass Edge & Reflection */}
       <div className="absolute top-0 left-0 right-0 h-[2px] bg-white/10 dark:bg-white/5 backdrop-blur-xl pointer-events-none" />
-      <AnimatePresence>
-        {isSearchExpanded && (
-          <motion.div
-            initial={{ opacity: 0, scaleX: 0.3 }}
-            animate={{ opacity: 1, scaleX: 1, transition: { duration: 0.8, delay: 0.1, ease: "easeOut" } }}
-            exit={{ opacity: 0, scaleX: 0.3, transition: { duration: 0.5 } }}
-            className="absolute top-0 left-0 right-0 h-[4px] bg-gradient-to-r from-transparent via-blue-600/80 to-transparent blur-[4px] pointer-events-none"
-          />
-        )}
-      </AnimatePresence>
 
       <div className="w-24" />
 
-      <div className="flex-1 flex justify-center h-full items-center relative">
-        {!islandOn && (
-        <motion.div 
-          style={{ WebkitAppRegion: 'no-drag' } as any}
-          className={cn(
-            "relative flex items-center gap-2 rounded-full bg-card/70 border border-border/30 backdrop-blur-xl shadow-sm cursor-text translate-y-[3px]",
-            isSearchExpanded 
-              ? "px-4 py-2" 
-              : "px-4 py-1.5"
-          )}
-          animate={{
-            width: isSearchExpanded ? 450 : 280
-          }}
-          transition={{
-            type: "spring",
-            stiffness: 350,
-            damping: 30
-          }}
-          onMouseEnter={() => setIsSearchHovered(true)}
-          onMouseLeave={() => setIsSearchHovered(false)}
-          onFocus={() => setIsSearchFocused(true)}
-          onBlur={(e) => {
-            if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-              setIsSearchFocused(false);
-            }
-          }}
-          onClick={() => {
-            document.getElementById("ai-search-input")?.focus();
-          }}
-          data-testid="search-container"
-        >
-          <div className="pointer-events-none absolute left-1/2 top-[-8px] h-0 w-0" style={{ zIndex: -1 }}>
-            <div
-              className="absolute top-0 transition-[transform,filter,opacity] duration-700 ease-out"
-              style={{
-                width: 500,
-                marginLeft: -250,
-                transform: assistantSpeaking ? "scaleX(4)" : "scaleX(1)",
-                transformOrigin: "center top",
-                filter: assistantSpeaking ? "brightness(1.16)" : "brightness(1)",
-                opacity: assistantSpeaking ? 1 : 0.8,
-              }}
-            >
-            <AnimatePresence>
-              {isSearchExpanded && (
-                <>
-                  {/* Top Base (Linear, Vivid Core) */}
-                  <div className="absolute left-1/2 top-0 -translate-x-1/2">
-                  <motion.div
-                    key="fire-core"
-                    initial={{ opacity: 0, scaleY: 0 }}
-                    animate={{ opacity: 1, scaleY: 1, transition: { duration: 0.4, ease: "easeOut" } }}
-                    exit={{ opacity: 0, scaleY: 0, transition: { duration: 0.3 } }}
-                    className="origin-top"
-                  >
-                    <motion.div
-                      animate={{ scaleX: [1, 1.08, 0.92, 1], scaleY: [1, 0.9, 1.1, 1], x: [0, 5, -5, 0] }}
-                      transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-                      className="w-[500px] h-[60px] blur-[40px]"
-                    >
-                      <div className="w-full h-full bg-blue-600/50 dark:bg-blue-600/60" style={{ clipPath: "polygon(0 0, 100% 0, 50% 100%)" }} />
-                    </motion.div>
-                  </motion.div>
-                  </div>
-
-                  {/* Mid Flame (Tapering) */}
-                  <div className="absolute left-1/2 top-0 -translate-x-1/2">
-                  <motion.div
-                    key="fire-mid"
-                    initial={{ opacity: 0, scaleY: 0 }}
-                    animate={{ opacity: 1, scaleY: 1, transition: { duration: 0.5, delay: 0.1, ease: "easeOut" } }}
-                    exit={{ opacity: 0, scaleY: 0, transition: { duration: 0.4 } }}
-                    className="origin-top"
-                  >
-                    <motion.div
-                      animate={{ scaleX: [1, 1.1, 0.9, 1], scaleY: [1, 1.05, 0.95, 1], x: [0, -10, 10, -5, 0] }}
-                      transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
-                      className="w-[380px] h-[120px] blur-[60px]"
-                    >
-                      <div className="w-full h-full bg-gradient-to-b from-blue-600/40 to-sky-400/20 dark:from-blue-600/50 dark:to-sky-400/30" style={{ clipPath: "polygon(0 0, 100% 0, 50% 100%)" }} />
-                    </motion.div>
-                  </motion.div>
-                  </div>
-
-                  {/* Bottom Tip (Faded and Narrow) */}
-                  <div className="absolute left-1/2 top-0 -translate-x-1/2">
-                  <motion.div
-                    key="fire-tip"
-                    initial={{ opacity: 0, scaleY: 0 }}
-                    animate={{ opacity: 1, scaleY: 1, transition: { duration: 0.6, delay: 0.2, ease: "easeOut" } }}
-                    exit={{ opacity: 0, scaleY: 0, transition: { duration: 0.5 } }}
-                    className="origin-top"
-                  >
-                    <motion.div
-                      animate={{ scaleX: [1, 1.15, 0.85, 1], scaleY: [1, 1.1, 0.9, 1], x: [0, 15, -15, 10, 0] }}
-                      transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
-                      className="w-[250px] h-[180px] blur-[80px]"
-                    >
-                      <div className="w-full h-full bg-gradient-to-b from-sky-400/20 to-cyan-200/10 dark:from-sky-400/30 dark:to-cyan-200/20" style={{ clipPath: "polygon(0 0, 100% 0, 50% 100%)" }} />
-                    </motion.div>
-                  </motion.div>
-                  </div>
-                </>
-              )}
-            </AnimatePresence>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigateToChat();
-            }}
-            title="Zenlecs+ AI Chat"
-            className={cn(
-              "flex items-center justify-center rounded-md bg-gradient-to-br from-primary/80 to-primary transition-all duration-300 ease-in-out shrink-0 cursor-pointer hover:opacity-90 active:scale-95",
-              isSearchExpanded ? "w-6 h-6" : "w-5 h-5"
-            )}
-            data-testid="button-open-ai-chat"
-          >
-            <Sparkles className={cn(
-              "text-primary-foreground transition-all duration-500 ease-in-out",
-              isSearchExpanded ? "w-3.5 h-3.5" : "w-3 h-3"
-            )} />
-          </button>
-          
-          {isSearchExpanded ? (
-            <input
-              id="ai-search-input"
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="Zenlecs+ ile ara veya sor..."
-              className="flex-1 bg-transparent outline-none text-sm text-foreground placeholder:text-muted-foreground/60 transition-all duration-500 min-w-0"
-              style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 400 }}
-              data-testid="input-ai-search"
-            />
-          ) : (
-            <span 
-              className="text-xs text-muted-foreground/60 flex-1 text-left transition-all duration-500 truncate min-w-0"
-              style={{ fontFamily: 'Montserrat, sans-serif', fontWeight: 400 }}
-            >
-              {searchQuery ? searchQuery : "Zenlecs+ ile ara veya sor..."}
-            </span>
-          )}
-          
-          {isSearchExpanded ? (
-            <button
-              onClick={handleSearch}
-              className="text-muted-foreground/60 hover:text-foreground transition-colors duration-300 shrink-0"
-              data-testid="button-ai-search-submit"
-            >
-              <Send className="w-4 h-4" />
-            </button>
-          ) : (
-            <div className="flex items-center gap-0.5 text-[10px] text-muted-foreground/60 transition-all duration-500 shrink-0">
-              <Command className="w-3 h-3" />
-              <span>K</span>
-            </div>
-          )}
-        </motion.div>
-        )}
-      </div>
+      <div className="flex-1" />
 
       <div className="flex items-center gap-1 h-full">
         <button

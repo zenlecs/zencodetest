@@ -2,17 +2,22 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "re
 import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { animate, AnimatePresence, motion, useMotionValue, useSpring, useTransform, useVelocity } from "motion/react";
-import { Bell, MessageCircle, Sparkles } from "lucide-react";
+import { Bell, MessageCircle, Mic, Settings, Sparkles, X } from "lucide-react";
+import { StudioContextMenu } from "@/components/studio/StudioContextMenu";
+import type { MenuItem } from "@/components/studio/contextMenuModel";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { VoiceSession } from "@/components/chat/voice-session";
+import { stopVoiceAssistant, toggleVoiceActive, useVoiceActive } from "@/lib/voice-assistant";
+import { subscribeVoiceSpectrum, type VoiceSpectrum } from "@/lib/voice-spectrum";
 import { subscribeVoiceCue, subscribeVoiceSpeaking } from "@/lib/voice-speaking";
-import { readIslandOffset, setDynamicIslandEnabled, useDynamicIsland, writeIslandOffset } from "@/lib/dynamic-island";
+import { readIslandOffset, writeIslandOffset } from "@/lib/dynamic-island";
 import { type IslandHost } from "@/lib/island-bridge";
 import { applyIslandBloom } from "@/lib/island-bloom";
 
 const SHELL_SPRING = { stiffness: 480, damping: 34, mass: 0.72 };
 const DIGIT_SPRING = { type: "spring" as const, stiffness: 500, damping: 36, mass: 0.5 };
 
-const COMPACT_W = 176;
+const COMPACT_W = 204;
 const SEARCH_W = 292;
 const NOTICE_W = 228;
 const COMPACT_H = 46;
@@ -30,6 +35,9 @@ type Dock = "free" | "left" | "right";
 
 type Mode = "compact" | "search" | "notices";
 
+const ISLAND_SETTINGS: MenuItem = { type: "action", id: "settings", label: "Ayarlar", icon: Settings };
+const ISLAND_CLOSE: MenuItem = { type: "action", id: "close", label: "Kapat", icon: X };
+
 type IslandNotification = {
   id: number;
   title: string;
@@ -38,8 +46,6 @@ type IslandNotification = {
 };
 
 export function DynamicIsland() {
-  const enabled = useDynamicIsland();
-  if (!enabled) return null;
   return <Island />;
 }
 
@@ -69,8 +75,10 @@ function Island() {
   const [shownCue, setShownCue] = useState("");
   const [cueWidth, setCueWidth] = useState(0);
   const [dragging, setDragging] = useState(false);
+  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null);
   const [noticeFire, setNoticeFire] = useState(false);
   const [speaking, setSpeaking] = useState(false);
+  const voiceOn = useVoiceActive();
   const [dock, setDock] = useState<Dock>("free");
   const dockRef = useRef<Dock>("free");
   dockRef.current = dock;
@@ -185,6 +193,7 @@ function Island() {
   }, [heightSpring, widthSpring]);
 
   const searchOpen = mode === "search" || holdSearch;
+  const assistantLive = voiceOn || speaking;
 
   const openPath = (path: string) => {
     if (overlay) window.electron?.send("island-navigate", path);
@@ -256,12 +265,12 @@ function Island() {
 
   useEffect(() => {
     if (!overlay) return;
-    window.electron?.send("island-focus", mode === "search");
-  }, [mode, overlay]);
+    window.electron?.send("island-focus", mode === "search" || menu !== null);
+  }, [menu, mode, overlay]);
 
   useEffect(() => {
     if (!overlay) return;
-    const hold = dragging || mode !== "compact";
+    const hold = dragging || mode !== "compact" || menu !== null;
     const sync = (clientX: number, clientY: number) => {
       pointerRef.current = { x: clientX, y: clientY, known: true };
       const el = document.elementFromPoint(clientX, clientY);
@@ -275,7 +284,7 @@ function Island() {
     const onMove = (event: MouseEvent) => sync(event.clientX, event.clientY);
     window.addEventListener("mousemove", onMove);
     return () => window.removeEventListener("mousemove", onMove);
-  }, [dragging, mode, overlay]);
+  }, [dragging, menu, mode, overlay]);
 
   useEffect(() => {
     if (!overlay) return;
@@ -286,17 +295,23 @@ function Island() {
   }, [overlay]);
 
   useEffect(() => {
-    if (overlay) {
-      const onVoice = (payload: { speaking?: boolean; cue?: string }) => {
-        setSpeaking(!!payload?.speaking);
-        const next = typeof payload?.cue === "string" ? payload.cue : "";
-        setCue(next);
-        if (next) setShownCue(next);
-      };
-      window.electron?.receive("island-voice", onVoice);
-      return () => window.electron?.removeListener("island-voice", onVoice);
-    }
-    return subscribeVoiceSpeaking(setSpeaking);
+    return () => stopVoiceAssistant();
+  }, []);
+
+  useEffect(() => {
+    const stopSpeaking = subscribeVoiceSpeaking(setSpeaking);
+    if (!overlay) return stopSpeaking;
+    const onVoice = (payload: { speaking?: boolean; cue?: string }) => {
+      setSpeaking(!!payload?.speaking);
+      const next = typeof payload?.cue === "string" ? payload.cue : "";
+      setCue(next);
+      if (next) setShownCue(next);
+    };
+    window.electron?.receive("island-voice", onVoice);
+    return () => {
+      stopSpeaking();
+      window.electron?.removeListener("island-voice", onVoice);
+    };
   }, [overlay]);
 
   useEffect(() => {
@@ -311,11 +326,11 @@ function Island() {
   }, [noticeFire]);
 
   useEffect(() => {
-    const controls = searchOpen || speaking
+    const controls = searchOpen || assistantLive
       ? animate(blueGlow, 0.9, { duration: 0.8, delay: 0.1, ease: "easeOut" })
       : animate(blueGlow, 0, { duration: 0.5, ease: "easeInOut" });
     return () => controls.stop();
-  }, [blueGlow, searchOpen, speaking]);
+  }, [assistantLive, blueGlow, searchOpen]);
 
   useEffect(() => {
     const controls = noticeFire
@@ -337,7 +352,7 @@ function Island() {
         : null;
       if (!point) return;
       const payload = {
-        blue: searchOpen || speaking ? Math.max(blueGlow.get(), 0.9) : blueGlow.get(),
+        blue: searchOpen || assistantLive ? Math.max(blueGlow.get(), 0.9) : blueGlow.get(),
         red: noticeFire ? Math.max(redGlow.get(), 1) : redGlow.get(),
         x: point.x,
         y: point.y,
@@ -360,7 +375,7 @@ function Island() {
     const followBloom = () => {
       if (!alive) return;
       publish();
-      if (searchOpen || speaking || noticeFire || blueGlow.get() > 0.01 || redGlow.get() > 0.01) {
+      if (searchOpen || assistantLive || noticeFire || blueGlow.get() > 0.01 || redGlow.get() > 0.01) {
         follow = window.requestAnimationFrame(followBloom);
       }
     };
@@ -376,15 +391,14 @@ function Island() {
       window.cancelAnimationFrame(raf);
       window.cancelAnimationFrame(follow);
     };
-  }, [blueGlow, heightSpring, noticeFire, overlay, redGlow, searchOpen, speaking, widthSpring, x, y]);
+  }, [assistantLive, blueGlow, heightSpring, noticeFire, overlay, redGlow, searchOpen, widthSpring, x, y]);
 
   useEffect(() => {
-    if (overlay) return;
     return subscribeVoiceCue((next) => {
       setCue(next);
       if (next) setShownCue(next);
     });
-  }, [overlay]);
+  }, []);
 
   useLayoutEffect(() => {
     if (!cue) {
@@ -511,6 +525,7 @@ function Island() {
         height: hostBox.height,
       } : { left: 0, top: 0, width: 0, height: 0, visibility: "hidden" }) : undefined}
     >
+      <VoiceSession active={voiceOn} />
       <span
         ref={cueMeasureRef}
         className="pointer-events-none absolute whitespace-nowrap text-[11px] font-medium"
@@ -545,7 +560,7 @@ function Island() {
           >
             <div className="relative h-0 w-0">
               <AnimatePresence>
-                {(searchOpen || speaking) && <BlueBloom />}
+                {(searchOpen || assistantLive) && <BlueBloom />}
               </AnimatePresence>
               <AnimatePresence>
                 {noticeFire && <RedBloom />}
@@ -579,13 +594,25 @@ function Island() {
         transformTemplate={({ x: dx, y: dy, scaleX: sx }) =>
           `translate(${-COMPACT_W / 2}px, ${-COMPACT_H / 2}px) translate(${dx}, ${dy}) scaleX(${sx || 1})`
         }
+        onPointerDownCapture={(event) => {
+          if (event.button === 2) event.stopPropagation();
+        }}
         onPointerDown={() => {
           dragged.current = false;
+        }}
+        onContextMenu={(event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          setMenu({
+            x: Math.min(event.clientX, window.innerWidth - 260),
+            y: Math.min(event.clientY, window.innerHeight - 120),
+          });
         }}
         onDragStart={() => {
           dragged.current = true;
           draggingNow.current = true;
           setDragging(true);
+          setMenu(null);
         }}
         onDrag={() => {
           considerDock(x.get(), widthSpring.get());
@@ -640,7 +667,17 @@ function Island() {
         >
         <div className={`flex h-full w-full ${vertical ? (dock === "right" ? "flex-row-reverse" : "flex-row") : "flex-col"}`}>
         <div className={vertical ? "flex h-full min-h-0 w-11 shrink-0 flex-col items-center gap-3.5 py-3.5" : "flex h-11 w-full shrink-0 items-center gap-3.5 px-3.5"}>
-          <Clock />
+          <button
+            type="button"
+            title={overlay && hostBox && !hostBox.attached ? "Pencereyi aç" : undefined}
+            onClick={() => {
+              if (dragged.current) return;
+              if (overlay && hostRef.current && !hostRef.current.attached) openPath("/os");
+            }}
+            className="flex shrink-0 items-center bg-transparent p-0"
+          >
+            <Clock />
+          </button>
           <Glyph
             title="Bildirimler"
             testId="button-island-notices"
@@ -716,6 +753,16 @@ function Island() {
             )}
           </motion.div>
           <Glyph
+            title={voiceOn ? "Sesli konuşmayı kapat" : "Sesli konuş"}
+            testId="button-island-voice"
+            onClick={() => {
+              toggleVoiceActive();
+              if (overlay && modeRef.current !== "search") window.electron?.send("island-focus", false);
+            }}
+          >
+            <Mic className={`h-3.5 w-3.5 ${voiceOn ? "text-[#2997ff]" : ""}`} strokeWidth={1.5} />
+          </Glyph>
+          <Glyph
             title="Zenlecs+"
             testId="button-island-search"
             onClick={() => setMode((current) => current === "search" ? "compact" : "search")}
@@ -744,15 +791,6 @@ function Island() {
               ))
             )}
           </div>
-          <button
-            type="button"
-            onClick={() => setDynamicIslandEnabled(false)}
-            onPointerDown={(event) => event.stopPropagation()}
-            className="mt-1 px-1 text-left text-[10px] text-white/55"
-            data-testid="button-classic-search"
-          >
-            Klasik çubuk
-          </button>
         </div>
         )}
         </div>
@@ -777,6 +815,21 @@ function Island() {
         onSubmit={submitSearch}
         onEscape={() => setMode("compact")}
       />
+      {menu && (
+        <StudioContextMenu
+          x={menu.x}
+          y={menu.y}
+          items={overlay && hostBox && !hostBox.attached ? [ISLAND_SETTINGS, ISLAND_CLOSE] : [ISLAND_SETTINGS]}
+          onClose={() => setMenu(null)}
+          onRun={(id) => {
+            if (id === "settings") openPath("/os/settings");
+            if (id === "close") {
+              stopVoiceAssistant();
+              window.electron?.send("island-dismiss");
+            }
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -891,10 +944,60 @@ function AttachedSearch({
   );
 }
 
+type VoiceBand = "low" | "mid" | "high";
+
+const VOICE_FLAME_SPRING = {
+  low: { stiffness: 28, damping: 20, mass: 1.5 },
+  mid: { stiffness: 32, damping: 20, mass: 1.2 },
+  high: { stiffness: 40, damping: 18, mass: 0.95 },
+} as const;
+
+function useVoiceFlameMotion(band: VoiceBand) {
+  const level = useMotionValue(0);
+  const low = useMotionValue(0);
+  const mid = useMotionValue(0);
+  const high = useMotionValue(0);
+  const centroid = useMotionValue(0.5);
+  useEffect(() => subscribeVoiceSpectrum((spectrum: VoiceSpectrum) => {
+    level.set(spectrum.level);
+    low.set(spectrum.low);
+    mid.set(spectrum.mid);
+    high.set(spectrum.high);
+    centroid.set(spectrum.centroid);
+  }), [centroid, high, level, low, mid]);
+
+  const spring = VOICE_FLAME_SPRING[band];
+  const scaleX = useSpring(useTransform([level, low, mid, high], () => {
+    const lv = level.get();
+    if (band === "low") return 1 + lv * 0.05 + low.get() * 0.09;
+    if (band === "mid") return 1 + lv * 0.04 + mid.get() * 0.07;
+    return 1 + high.get() * 0.045;
+  }), spring);
+  const scaleY = useSpring(useTransform([level, low, mid, high], () => {
+    const lv = level.get();
+    if (band === "low") return 1 + lv * 0.03 + low.get() * 0.05;
+    if (band === "mid") return 1 + lv * 0.07 + mid.get() * 0.06;
+    return 1 + lv * 0.04 + high.get() * 0.12;
+  }), spring);
+  const x = useSpring(useTransform([low, mid, high], () => {
+    if (band === "low") return (low.get() - high.get()) * 7;
+    if (band === "mid") return (mid.get() - (low.get() + high.get()) * 0.5) * 6;
+    return (high.get() - low.get()) * 6;
+  }), spring);
+  const y = useSpring(useTransform([level, high, centroid], () => {
+    const shift = centroid.get() - 0.5;
+    if (band === "low") return -shift * 4 * level.get();
+    if (band === "mid") return shift * 3;
+    return shift * 8 * (0.35 + high.get());
+  }), spring);
+  return { scaleX, scaleY, x, y };
+}
+
 function BlueBloom() {
   return (
     <>
-      <Flame
+      <BlueFlame
+        band="low"
         width={500}
         height={60}
         blur={40}
@@ -911,7 +1014,8 @@ function BlueBloom() {
         duration={9.5}
         repeat={Infinity}
       />
-      <Flame
+      <BlueFlame
+        band="mid"
         width={380}
         height={120}
         blur={60}
@@ -930,7 +1034,8 @@ function BlueBloom() {
         duration={12.4}
         repeat={Infinity}
       />
-      <Flame
+      <BlueFlame
+        band="high"
         width={250}
         height={180}
         blur={80}
@@ -950,6 +1055,11 @@ function BlueBloom() {
       />
     </>
   );
+}
+
+function BlueFlame({ band, ...props }: { band: VoiceBand } & Omit<Parameters<typeof Flame>[0], "audio">) {
+  const audio = useVoiceFlameMotion(band);
+  return <Flame {...props} audio={audio} />;
 }
 
 function RedBloom() {
@@ -1026,6 +1136,7 @@ function Flame({
   times,
   duration,
   repeat,
+  audio,
 }: {
   width: number | string;
   height: number | string;
@@ -1038,7 +1149,9 @@ function Flame({
   times?: number[];
   duration: number;
   repeat: number;
+  audio?: { scaleX: ReturnType<typeof useSpring>; scaleY: ReturnType<typeof useSpring>; x: ReturnType<typeof useSpring>; y: ReturnType<typeof useSpring> };
 }) {
+  const shape = <div className={`h-full w-full ${color}`} style={{ clipPath: "polygon(0 0, 100% 0, 50% 100%)" }} />;
   return (
     <motion.div
       initial={{ opacity: 0, scaleY: 0 }}
@@ -1053,7 +1166,11 @@ function Flame({
         className="h-full w-full"
         style={{ filter: `blur(${blur}px)` }}
       >
-        <div className={`h-full w-full ${color}`} style={{ clipPath: "polygon(0 0, 100% 0, 50% 100%)" }} />
+        {audio ? (
+          <motion.div className="h-full w-full" style={audio}>
+            {shape}
+          </motion.div>
+        ) : shape}
       </motion.div>
     </motion.div>
   );

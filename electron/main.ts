@@ -50,10 +50,20 @@ let launcherWindow: BrowserWindow | null = null;
 let islandWindow: BrowserWindow | null = null;
 let voiceBlockerId: number | null = null;
 let islandQuitting = false;
+let islandDismissed = false;
+let islandDismissing = false;
 let lastVisibleBounds: { x: number; y: number; width: number; height: number } | null = null;
 
 function isAppWindow(contents: WebContents | null): boolean {
   return !!contents && !!mainWindow && !mainWindow.isDestroyed() && contents.id === mainWindow.webContents.id;
+}
+
+function isIslandContents(contents: WebContents | null): boolean {
+  return !!contents && !!islandWindow && !islandWindow.isDestroyed() && contents.id === islandWindow.webContents.id;
+}
+
+function allowsAssistantMedia(contents: WebContents | null): boolean {
+  return isAppWindow(contents) || isIslandContents(contents);
 }
 
 function startVoiceBlocker() {
@@ -117,14 +127,19 @@ function virtualScreenBounds() {
   };
 }
 
+function mainIsOnScreen(win: BrowserWindow | null): boolean {
+  if (!win || win.isDestroyed() || !win.isVisible() || win.isMinimized()) return false;
+  const bounds = win.getBounds();
+  return bounds.width > 40 && bounds.height > 40 && bounds.x > -16000 && bounds.y > -16000;
+}
+
 function islandHostPayload() {
   const origin = islandWindow && !islandWindow.isDestroyed()
     ? islandWindow.getBounds()
     : virtualScreenBounds();
   const win = mainWindow;
   const bounds = win && !win.isDestroyed() ? win.getBounds() : null;
-  const onScreen = !!win && !win.isDestroyed() && win.isVisible() && !win.isMinimized()
-    && !!bounds && bounds.width > 40 && bounds.height > 40 && bounds.x > -16000 && bounds.y > -16000;
+  const onScreen = mainIsOnScreen(win);
   if (onScreen && bounds) {
     lastVisibleBounds = bounds;
     return {
@@ -161,6 +176,7 @@ function fitIslandWindow() {
 }
 
 function destroyIslandWindow() {
+  islandDismissed = false;
   if (islandWindow && !islandWindow.isDestroyed()) {
     islandWindow.removeAllListeners();
     islandWindow.destroy();
@@ -172,7 +188,7 @@ function createIslandWindow() {
   if (islandWindow && !islandWindow.isDestroyed()) {
     fitIslandWindow();
     islandWindow.setIgnoreMouseEvents(true, { forward: true });
-    if (!islandWindow.isVisible()) islandWindow.showInactive();
+    if (!islandDismissed && !islandWindow.isVisible()) islandWindow.showInactive();
     publishIslandHost();
     return;
   }
@@ -203,6 +219,7 @@ function createIslandWindow() {
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true,
+      backgroundThrottling: false,
     },
   });
 
@@ -218,8 +235,10 @@ function createIslandWindow() {
   islandWindow.once('ready-to-show', () => {
     if (!islandWindow || islandWindow.isDestroyed()) return;
     fitIslandWindow();
-    islandWindow.showInactive();
+    islandWindow.webContents.setBackgroundThrottling(false);
+    if (!islandDismissed) islandWindow.showInactive();
     publishIslandHost();
+    publishIslandVoice();
   });
 
   islandWindow.on('closed', () => {
@@ -227,14 +246,46 @@ function createIslandWindow() {
   });
 }
 
+function dismissFloatingIsland() {
+  const win = mainWindow;
+  if (!win || win.isDestroyed() || mainIsOnScreen(win)) return;
+  islandDismissed = true;
+  if (islandWindow && !islandWindow.isDestroyed()) {
+    islandWindow.setIgnoreMouseEvents(true, { forward: true });
+    islandWindow.hide();
+  }
+  if (!win.isMinimized()) {
+    islandDismissing = true;
+    win.showInactive();
+    win.minimize();
+    islandDismissing = false;
+  }
+}
+
+function revealDismissedIsland(win: BrowserWindow) {
+  if (islandDismissing || !islandDismissed || !mainIsOnScreen(win)) return;
+  islandDismissed = false;
+  createIslandWindow();
+}
+
 function bindMainForIsland(win: BrowserWindow) {
-  const publish = () => publishIslandHost();
+  const publish = () => {
+    revealDismissedIsland(win);
+    publishIslandHost();
+  };
+  const restore = () => {
+    if (islandDismissed) {
+      islandDismissed = false;
+      createIslandWindow();
+    }
+    publishIslandHost();
+  };
   win.on('move', publish);
   win.on('resize', publish);
   win.on('maximize', publish);
   win.on('unmaximize', publish);
   win.on('minimize', publish);
-  win.on('restore', publish);
+  win.on('restore', restore);
   win.on('hide', publish);
   win.on('show', publish);
 }
@@ -365,6 +416,15 @@ function createMainWindow() {
     mainWindow.show();
     launcherWindow?.hide();
     mainWindow.webContents.send('auth-session-ready');
+  });
+
+  mainWindow.on('close', (event) => {
+    if (islandQuitting) return;
+    if (!islandWindow || islandWindow.isDestroyed() || !islandWindow.isVisible()) return;
+    event.preventDefault();
+    if (!mainWindow || mainWindow.isDestroyed()) return;
+    mainWindow.hide();
+    publishIslandHost();
   });
 
   mainWindow.on('closed', () => {
@@ -516,7 +576,7 @@ app.whenReady().then(() => {
   // Medya isteği yoksa Electron bunu sormadan reddeder. Ses ve mevcut aramalar
   // yalnızca uygulama penceresinde açılır; başlatıcı ve gömülü sayfalar açamaz.
   appSession.setPermissionCheckHandler((contents, permission) => {
-    if (permission === 'media') return isAppWindow(contents);
+    if (permission === 'media') return allowsAssistantMedia(contents);
     return permission === 'fullscreen'
       || permission === 'clipboard-sanitized-write'
       || permission === 'notifications'
@@ -524,7 +584,7 @@ app.whenReady().then(() => {
   });
   appSession.setPermissionRequestHandler((contents, permission, callback) => {
     if (permission === 'media') {
-      callback(isAppWindow(contents));
+      callback(allowsAssistantMedia(contents));
       return;
     }
     callback(
@@ -589,18 +649,15 @@ app.on('before-quit', () => {
 });
 
 // Window controls IPC
-ipcMain.on('window-min', () => {
-  const win = BrowserWindow.getFocusedWindow();
-  win?.minimize();
+ipcMain.on('window-min', (event) => {
+  BrowserWindow.fromWebContents(event.sender)?.minimize();
 });
 
-ipcMain.on('window-max', () => {
-  const win = BrowserWindow.getFocusedWindow();
-  if (win?.isMaximized()) {
-    win?.unmaximize();
-  } else {
-    win?.maximize();
-  }
+ipcMain.on('window-max', (event) => {
+  const win = BrowserWindow.fromWebContents(event.sender);
+  if (!win) return;
+  if (win.isMaximized()) win.unmaximize();
+  else win.maximize();
 });
 
 // Legacy alias — prefer auth-login
@@ -622,9 +679,8 @@ ipcMain.handle('payload-install', (event) => payloadInstall((update) => {
   event.sender.send('payload-progress', update);
 }));
 
-ipcMain.on('window-close', () => {
-  const win = BrowserWindow.getFocusedWindow();
-  win?.close();
+ipcMain.on('window-close', (event) => {
+  BrowserWindow.fromWebContents(event.sender)?.close();
 });
 
 ipcMain.on('detach-communication', () => {
@@ -633,10 +689,17 @@ ipcMain.on('detach-communication', () => {
 
 ipcMain.on('island-visibility', (event, visible) => {
   const show = visible === true;
-  if (show) createIslandWindow();
+  if (show) {
+    if (islandDismissed && mainIsOnScreen(mainWindow)) islandDismissed = false;
+    if (!islandDismissed) createIslandWindow();
+  }
   else if (islandWindow && !islandWindow.isDestroyed()) {
     islandWindow.setIgnoreMouseEvents(true, { forward: true });
     islandWindow.hide();
+    if (mainWindow && !mainWindow.isDestroyed() && !mainWindow.isVisible()) {
+      mainWindow.show();
+      mainWindow.focus();
+    }
   }
   for (const win of [mainWindow, islandWindow]) {
     if (!win || win.isDestroyed() || win.webContents === event.sender) continue;
@@ -646,6 +709,10 @@ ipcMain.on('island-visibility', (event, visible) => {
 
 ipcMain.on('island-sync', () => {
   publishIslandHost();
+});
+
+ipcMain.on('island-dismiss', () => {
+  dismissFloatingIsland();
 });
 
 ipcMain.on('island-hit', (_event, interactive) => {
@@ -677,9 +744,22 @@ let bloomAwake = false;
 
 function refreshContentThrottling() {
   const throttle = !(bloomAwake || voiceBlockerId !== null);
+  for (const win of [mainWindow, communicationWindow, islandWindow]) {
+    if (!win || win.isDestroyed()) continue;
+    win.webContents.setBackgroundThrottling(win === islandWindow ? false : throttle);
+  }
+}
+
+let islandVoiceActive = false;
+
+function publishIslandVoice() {
+  const payload = { active: islandVoiceActive };
+  if (islandWindow && !islandWindow.isDestroyed()) {
+    islandWindow.webContents.send('island-voice-control', payload);
+  }
   for (const win of [mainWindow, communicationWindow]) {
     if (!win || win.isDestroyed()) continue;
-    win.webContents.setBackgroundThrottling(throttle);
+    win.webContents.send('island-voice-state', payload);
   }
 }
 
@@ -707,14 +787,24 @@ ipcMain.on('island-navigate', (_event, path) => {
 });
 
 // Theme sync
+ipcMain.on('island-voice-sync', () => {
+  publishIslandVoice();
+});
+
+ipcMain.on('island-voice-control', (_event, payload) => {
+  if (payload && typeof payload.active === 'boolean') islandVoiceActive = payload.active;
+  else islandVoiceActive = !islandVoiceActive;
+  publishIslandVoice();
+});
+
 ipcMain.on('voice-session-start', (event) => {
-  if (!isAppWindow(event.sender)) return;
+  if (!allowsAssistantMedia(event.sender)) return;
   startVoiceBlocker();
   refreshContentThrottling();
 });
 
 ipcMain.on('voice-session-stop', (event) => {
-  if (!isAppWindow(event.sender)) return;
+  if (!allowsAssistantMedia(event.sender)) return;
   stopVoiceBlocker();
   refreshContentThrottling();
 });

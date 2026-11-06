@@ -14,9 +14,11 @@ import { LiveChatToggle } from "@/components/layout/live-chat-toggle";
 import { Logo } from "@/components/layout/logo";
 import { Header } from "@/components/layout/header";
 import { DynamicIsland } from "@/components/layout/dynamic-island";
+import { VoiceSession } from "@/components/chat/voice-session";
+import { useVoiceActive } from "@/lib/voice-assistant";
 import { bindIslandNotifications } from "@/lib/island-bridge";
 import { applyIslandBloom, type IslandBloom } from "@/lib/island-bloom";
-import { readDynamicIsland, useDynamicIsland } from "@/lib/dynamic-island";
+import { useDynamicIsland } from "@/lib/dynamic-island";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/dashboard";
 import WalletPage from "@/pages/wallet";
@@ -62,7 +64,7 @@ function IslandHostBridge({ overlay }: { overlay: boolean }) {
 
   useEffect(() => {
     if (!overlay || window.zenosWindowRole === "island") return;
-    window.electron?.send("island-visibility", readDynamicIsland());
+    window.electron?.send("island-visibility", true);
   }, [enabled, overlay]);
 
   useEffect(() => {
@@ -80,6 +82,13 @@ function IslandHostBridge({ overlay }: { overlay: boolean }) {
   }, []);
 
   return null;
+}
+
+function VoiceHost() {
+  const islandOn = useDynamicIsland();
+  const active = useVoiceActive();
+  if (islandOn || window.zenosWindowRole === "island") return null;
+  return <VoiceSession active={active} />;
 }
 
 function IslandBloomBridge() {
@@ -244,6 +253,7 @@ function App() {
               <WebSocketProvider>
                 <CallProvider>
                   <Router />
+                  <VoiceHost />
                   <IslandBloomBridge />
                   <Toaster />
                 </CallProvider>

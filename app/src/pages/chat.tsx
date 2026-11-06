@@ -9,7 +9,7 @@ import {
   type ComposerSelection,
 } from "@/components/chat/chat-composer";
 import { VerticalChatComposer } from "@/components/chat/vertical-chat-composer";
-import { VoiceSession } from "@/components/chat/voice-session";
+import { toggleVoiceActive, useVoiceActive } from "@/lib/voice-assistant";
 
 interface AIConversation {
   id: number;
@@ -458,7 +458,7 @@ export default function AIChatPage() {
   const [turnPersisted, setTurnPersisted] = useState(false);
   const [presentationTurn, setPresentationTurn] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [voiceOpen, setVoiceOpen] = useState(false);
+  const voiceOpen = useVoiceActive();
   const [composerMode, setComposerMode] = useState<ComposerMode>("docked");
   const [panelPos, setPanelPos] = useState<Point>({ x: 24, y: 24 });
   const [panelSize, setPanelSize] = useState({ width: PANEL_MAX_W, height: PANEL_MAX_W * 0.75 });
@@ -1031,7 +1031,7 @@ export default function AIChatPage() {
     selection: composerSelection,
     onSelectionChange: setComposerSelection,
     onSubmit: () => handleSendMessage(),
-    onToggleVoice: () => setVoiceOpen((open) => !open),
+    onToggleVoice: () => toggleVoiceActive(),
     voiceActive: voiceOpen,
     disabled: isStreaming || isDeleting,
     inputRef,
@@ -1051,7 +1051,6 @@ export default function AIChatPage() {
 
   return (
     <div ref={pageRef} className="relative flex h-full w-full min-w-0 max-w-full flex-col select-text overflow-hidden bg-background">
-      <VoiceSession active={voiceOpen} />
       <div className="relative min-h-0 min-w-0 flex-1">
       <div className="custom-scrollbar h-full min-w-0 overflow-x-hidden overflow-y-auto px-0 pb-4 pt-8">
         <div className={CHAT_STAGE}>

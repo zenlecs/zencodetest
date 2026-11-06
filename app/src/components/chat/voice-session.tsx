@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { Conversation } from "@elevenlabs/client";
+import { clearVoiceSpectrum, sampleAssistantOutput } from "@/lib/voice-spectrum";
 import { setVoiceCue, setVoiceSpeaking } from "@/lib/voice-speaking";
 
 let sessionLock: Promise<void> = Promise.resolve();
@@ -23,7 +24,29 @@ export function VoiceSession({ active }: { active: boolean }) {
     if (!active) return;
     let cancelled = false;
     let conversation: Awaited<ReturnType<typeof Conversation.startSession>> | null = null;
+    let spectrumFrame = 0;
     const abort = new AbortController();
+
+    const watchSpectrum = () => {
+      if (cancelled) return;
+      const activeConversation = conversation;
+      if (
+        activeConversation
+        && "getOutputByteFrequencyData" in activeConversation
+        && "getOutputVolume" in activeConversation
+        && activeConversation.isOpen()
+      ) {
+        try {
+          sampleAssistantOutput(
+            activeConversation.getOutputByteFrequencyData(),
+            activeConversation.getOutputVolume(),
+          );
+        } catch {
+          clearVoiceSpectrum();
+        }
+      }
+      spectrumFrame = window.requestAnimationFrame(watchSpectrum);
+    };
 
     window.electron?.send("voice-session-start");
 
@@ -73,6 +96,7 @@ export function VoiceSession({ active }: { active: boolean }) {
           return;
         }
         conversation.setVolume({ volume: 1 });
+        spectrumFrame = window.requestAnimationFrame(watchSpectrum);
       } catch (err) {
         if (cancelled || abort.signal.aborted) return;
         console.error(err instanceof Error ? err.message : "Ses oturumu açılamadı.");
@@ -83,6 +107,8 @@ export function VoiceSession({ active }: { active: boolean }) {
 
     return () => {
       cancelled = true;
+      window.cancelAnimationFrame(spectrumFrame);
+      clearVoiceSpectrum();
       abort.abort();
       setVoiceSpeaking(false);
       setVoiceCue("");
